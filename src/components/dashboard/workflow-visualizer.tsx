@@ -10,7 +10,7 @@ import {
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
 import type { Agent, Task, Tool, Node } from '@/lib/types';
-import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical, Trash2 } from 'lucide-react';
+import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical, Trash2, Pencil } from 'lucide-react';
 import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -183,8 +183,11 @@ export default function WorkflowVisualizer() {
   const wasDragged = useRef(false);
 
   useEffect(() => {
-    setIsEditorOpen(!!selectedNodeId);
-  }, [selectedNodeId]);
+    // If a node is selected, the editor opens.
+    // If no node is selected, the editor closes.
+    // This is managed separately from just clicking to handle cases where a node is deleted.
+    setIsEditorOpen(!!selectedNodeId && isEditorOpen);
+  }, [selectedNodeId, isEditorOpen]);
 
   const getNode = (id: string) => {
     return nodes.find(n => n.id === id);
@@ -205,16 +208,25 @@ export default function WorkflowVisualizer() {
     setNodes(prev => prev.filter(n => n.id !== nodeId));
     if(selectedNodeId === nodeId) {
       setSelectedNodeId(null);
+      setIsEditorOpen(false); // Close editor if the deleted node was being edited
     }
   }
 
 
   const handleSave = (updatedNode: Node) => {
     setNodes(prevNodes => prevNodes.map(n => n.id === updatedNode.id ? updatedNode : n));
+    setIsEditorOpen(false);
     setSelectedNodeId(null);
   };
+  
+  const handleEditClick = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    setSelectedNodeId(nodeId);
+    setIsEditorOpen(true);
+  }
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>, nodeId: string) => {
+    // Prevent drag from starting on input elements
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).closest('[data-radix-select-trigger]')) {
         return;
     }
@@ -237,7 +249,11 @@ export default function WorkflowVisualizer() {
 
     const handleMouseMove = (me: globalThis.MouseEvent) => {
       if (!containerRect) return;
-      wasDragged.current = true;
+      // Set wasDragged to true if mouse moves more than a few pixels
+      if (Math.abs(me.clientX - e.clientX) > 5 || Math.abs(me.clientY - e.clientY) > 5) {
+        wasDragged.current = true;
+      }
+
       const newX = me.clientX - containerRect.left - dragOffset.current.x;
       const newY = me.clientY - containerRect.top - dragOffset.current.y;
 
@@ -252,6 +268,10 @@ export default function WorkflowVisualizer() {
       setDraggingNode(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      // Use a timeout to reset wasDragged, allowing click to fire if it wasn't a drag
+      setTimeout(() => {
+          wasDragged.current = false;
+      }, 0);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -357,6 +377,15 @@ export default function WorkflowVisualizer() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
+                
+                <button 
+                  onClick={(e) => handleEditClick(e, node.id)}
+                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 bg-secondary text-secondary-foreground rounded-full p-1.5 hover:bg-primary hover:text-primary-foreground transition-colors shadow-md"
+                  aria-label="Edit Node"
+                >
+                    <Pencil className="w-4 h-4" />
+                </button>
+
 
                 {node.type === 'agent' && 'data' in node && (
                   <div className='space-y-3'>
@@ -430,7 +459,9 @@ export default function WorkflowVisualizer() {
           node={selectedNode}
           isOpen={isEditorOpen}
           setIsOpen={(open) => {
-            if (!open) setSelectedNodeId(null);
+            if (!open) {
+                setSelectedNodeId(null);
+            }
             setIsEditorOpen(open);
           }}
           onSave={handleSave}
