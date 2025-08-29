@@ -31,7 +31,6 @@ const mockAgents: Agent[] = [
     goal: 'Analyze sales data to find key performance indicators',
     backstory: 'An expert in data analysis and visualization, with a knack for finding hidden patterns in large datasets.',
     tools: ['file_reader', 'calculator'],
-    tasks: [],
   },
   {
     id: 'agent-2',
@@ -39,7 +38,6 @@ const mockAgents: Agent[] = [
     goal: 'Find market trends and competitor strategies',
     backstory: 'A skilled operative in the digital world, capable of sifting through vast amounts of web data to find actionable intelligence.',
     tools: ['browser'],
-    tasks: [],
   },
 ];
 
@@ -123,8 +121,7 @@ export default function AgentsPage() {
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAgentData = {
-      id: editingAgent?.id || `agent-${Date.now()}`,
+    const newAgentData: Omit<Agent, 'id'> = {
       role: formData.get('role') as string,
       goal: formData.get('goal') as string,
       backstory: formData.get('backstory') as string,
@@ -132,8 +129,8 @@ export default function AgentsPage() {
     };
 
     const newAgent: Agent = {
+      id: editingAgent?.id || `agent-${Date.now()}`,
       ...newAgentData,
-      tasks: editingAgent?.tasks || [],
     }
 
     if (editingAgent) {

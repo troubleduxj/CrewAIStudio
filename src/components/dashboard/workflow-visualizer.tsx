@@ -9,18 +9,12 @@ import {
 } from '@/components/ui/card';
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
-import { Agent, Task, Tool } from '@/lib/types';
-import { Cog, ListChecks, User, GripVertical } from 'lucide-react';
+import type { Agent, Task, Tool, Node } from '@/lib/types';
+import { Cog, ListChecks, User, Network } from 'lucide-react';
 import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 
 type Vector2 = { x: number; y: number };
-
-export interface Node {
-  id: string;
-  pos: Vector2;
-  data: Agent;
-}
 
 const initialAgents: Agent[] = [
   {
@@ -29,8 +23,18 @@ const initialAgents: Agent[] = [
     goal: 'Analyze sales data',
     backstory: 'An expert in data analysis and visualization.',
     tools: ['file_reader', 'calculator'],
-    tasks: [
-      {
+  },
+  {
+    id: 'agent-2',
+    role: 'Web Researcher',
+    goal: 'Find market trends',
+    backstory: 'Skilled in browsing the web for information.',
+    tools: ['browser'],
+  },
+];
+
+const initialTasks: Task[] = [
+    {
         id: 'task-1',
         agentId: 'agent-1',
         name: 'Load Sales Data',
@@ -50,15 +54,6 @@ const initialAgents: Agent[] = [
         progress: 100,
         logs: [],
       },
-    ],
-  },
-  {
-    id: 'agent-2',
-    role: 'Web Researcher',
-    goal: 'Find market trends',
-    backstory: 'Skilled in browsing the web for information.',
-    tools: ['browser'],
-    tasks: [
       {
         id: 'task-3',
         agentId: 'agent-2',
@@ -69,25 +64,40 @@ const initialAgents: Agent[] = [
         progress: 50,
         logs: [],
       },
-    ],
-  },
-];
+]
 
 const initialNodes: Node[] = [
   {
     id: 'agent-1',
-    pos: { x: 250, y: 180 },
+    type: 'agent',
+    position: { x: 150, y: 100 },
     data: initialAgents[0],
   },
   {
     id: 'agent-2',
-    pos: { x: 650, y: 180 },
+    type: 'agent',
+    position: { x: 150, y: 350 },
     data: initialAgents[1],
   },
+  {
+      id: 'task-1',
+      type: 'task',
+      position: {x: 450, y: 50},
+      data: initialTasks[0]
+  },
+  {
+      id: 'task-2',
+      type: 'task',
+      position: {x: 450, y: 180},
+      data: initialTasks[1]
+  },
+  {
+      id: 'task-3',
+      type: 'task',
+      position: {x: 450, y: 350},
+      data: initialTasks[2]
+  }
 ];
-
-const nodeWidth = 300;
-const nodeHeight = "auto";
 
 const toolIcons: Record<Tool, React.ReactNode> = {
   browser: (
@@ -151,6 +161,17 @@ const toolIcons: Record<Tool, React.ReactNode> = {
   ),
 };
 
+const Handle = ({ id, position }) => (
+    <div
+      id={id}
+      className={cn(
+        "absolute w-3 h-3 rounded-full bg-primary/70 border-2 border-background hover:bg-primary hover:scale-110 transition-all",
+        position
+      )}
+    />
+  );
+  
+
 export default function WorkflowVisualizer() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -192,8 +213,8 @@ export default function WorkflowVisualizer() {
 
     setDraggingNode(nodeId);
     dragOffset.current = {
-      x: e.clientX - containerRect.left - node.pos.x,
-      y: e.clientY - containerRect.top - node.pos.y,
+      x: e.clientX - containerRect.left - node.position.x,
+      y: e.clientY - containerRect.top - node.position.y,
     };
 
     const handleMouseMove = (me: globalThis.MouseEvent) => {
@@ -203,7 +224,7 @@ export default function WorkflowVisualizer() {
 
       setNodes(prevNodes =>
         prevNodes.map(n =>
-          n.id === nodeId ? { ...n, pos: { x: newX, y: newY } } : n
+          n.id === nodeId ? { ...n, position: { x: newX, y: newY } } : n
         )
       );
     };
@@ -218,12 +239,33 @@ export default function WorkflowVisualizer() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const getConnections = () => {
+    const connections = [];
+    const tasksWithAgents = initialTasks.filter(t => t.agentId);
+    tasksWithAgents.forEach(task => {
+        if(task.agentId) {
+            connections.push({source: task.agentId, target: task.id});
+        }
+    });
+    return connections;
+  }
+
+  const connections = getConnections();
+
+  const getPath = (sourceNode, targetNode) => {
+    if (!sourceNode || !targetNode) return '';
+    const sourcePos = sourceNode.position;
+    const targetPos = targetNode.position;
+    return `M ${sourcePos.x} ${sourcePos.y} C ${sourcePos.x + 100} ${sourcePos.y} ${targetPos.x - 100} ${targetPos.y} ${targetPos.x} ${targetPos.y}`;
+  }
+
+
   return (
     <>
-      <Card className="h-full min-h-[500px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
+      <Card className="h-full min-h-[600px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <User
+            <Network
               className="w-6 h-6 text-accent"
               style={{ filter: 'drop-shadow(0 0 5px hsl(var(--accent)))' }}
             />
@@ -238,63 +280,81 @@ export default function WorkflowVisualizer() {
         <CardContent>
           <div
             ref={containerRef}
-            className="relative w-full h-[400px] bg-background/50 rounded-lg border border-border/40 overflow-hidden select-none"
+            className="relative w-full h-[500px] bg-background/50 rounded-lg border border-border/40 overflow-hidden select-none"
             onClick={() => setSelectedNodeId(null)}
           >
+            <svg className="absolute w-full h-full" pointerEvents="none">
+              <defs>
+                <marker
+                    id="arrowhead"
+                    viewBox="0 0 10 10"
+                    refX="8"
+                    refY="5"
+                    markerWidth="6"
+                    markerHeight="6"
+                    orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--primary))" />
+                </marker>
+              </defs>
+              {connections.map(({source, target}) => {
+                const sourceNode = getNode(source);
+                const targetNode = getNode(target);
+                if (!sourceNode || !targetNode) return null;
+                const path = getPath(sourceNode, targetNode);
+                return (
+                    <path key={`${source}-${target}`} d={path} stroke="hsl(var(--primary))" strokeWidth="2" fill="none" markerEnd='url(#arrowhead)' />
+                )
+              })}
+            </svg>
             {nodes.map(node => (
               <div
                 key={node.id}
+                onMouseDown={(e) => handleMouseDown(e, node.id)}
                 onClick={(e) => { e.stopPropagation(); handleNodeClick(node.id); }}
                 className={cn(
-                  'absolute flex flex-col gap-3 p-3 rounded-lg shadow-lg transition-all border-2 bg-card',
-                  selectedNodeId === node.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-primary' : 'border-primary/50',
+                  'absolute p-4 rounded-lg shadow-lg transition-all border-2 bg-card cursor-grab',
+                  selectedNodeId === node.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-primary' : 'border-border/60',
+                  draggingNode === node.id && 'cursor-grabbing shadow-2xl scale-105',
+                  node.type === 'agent' ? 'w-64' : 'w-72'
                 )}
                 style={{
-                  left: node.pos.x,
-                  top: node.pos.y,
-                  width: `${nodeWidth}px`,
-                  height: nodeHeight,
+                  left: node.position.x,
+                  top: node.position.y,
                   transform: 'translate(-50%, -50%)',
                 }}
               >
-                <div
-                  onMouseDown={(e) => handleMouseDown(e, node.id)}
-                  className={cn(
-                    'flex items-center gap-3 cursor-grab',
-                    draggingNode === node.id ? 'cursor-grabbing' : 'cursor-grab',
-                  )}
-                >
-                  <GripVertical className="text-muted-foreground" />
-                  <User className="w-5 h-5 text-primary" />
-                  <div className="flex-1">
-                    <div className="font-bold text-primary">{node.data.role}</div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pl-4">
-                  <div className="flex items-center gap-2">
-                    <Cog className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex flex-wrap gap-1">
-                      {node.data.tools.map(tool => (
-                        <Badge key={tool} variant="secondary" className="flex items-center gap-1.5 pl-2">
-                          {toolIcons[tool]}
-                          {tool}
-                        </Badge>
-                      ))}
+                {node.type === 'agent' && 'data' in node && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <User className="w-5 h-5 text-primary" />
+                      <div className="font-bold text-primary">{(node.data as Agent).role}</div>
                     </div>
-                  </div>
-
-                  <div className="flex items-start gap-2">
-                    <ListChecks className="w-4 h-4 text-muted-foreground mt-1" />
-                    <div className="flex flex-col gap-1 w-full">
-                      {node.data.tasks.map(task => (
-                        <div key={task.id} className="text-xs bg-background/50 p-1.5 rounded">
-                          {task.name}
+                     <div className="flex items-center gap-2 mt-2">
+                        <Cog className="w-4 h-4 text-muted-foreground" />
+                        <div className="flex flex-wrap gap-1">
+                          {(node.data as Agent).tools.map(tool => (
+                            <Badge key={tool} variant="secondary" className="flex items-center gap-1.5 pl-2">
+                              {toolIcons[tool]}
+                              {tool}
+                            </Badge>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                      </div>
+                    <Handle id={`${node.id}-bottom`} position="-bottom-1.5 left-1/2 -translate-x-1/2" />
+                  </>
+                )}
+                {node.type === 'task' && 'data' in node && (
+                    <>
+                        <div className="flex items-center gap-3">
+                            <ListChecks className="w-5 h-5 text-primary" />
+                            <div className="font-bold text-primary">{(node.data as Task).name}</div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 truncate">{(node.data as Task).instructions}</p>
+                        <Handle id={`${node.id}-top`} position="-top-1.5 left-1/2 -translate-x-1/2" />
+                        <Handle id={`${node.id}-left`} position="-left-1.5 top-1/2 -translate-y-1/2" />
+                        <Handle id={`${node.id}-right`} position="-right-1.5 top-1/2 -translate-y-1/2" />
+                    </>
+                )}
               </div>
             ))}
           </div>

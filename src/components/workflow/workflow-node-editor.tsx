@@ -1,6 +1,6 @@
 "use client"
 
-import type { Node } from '@/components/dashboard/workflow-visualizer';
+import type { Node, Agent, Task } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +40,7 @@ export default function WorkflowNodeEditor({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...node, data: formData });
+    onSave({ ...node, data: formData as Agent | Task });
     setIsOpen(false);
   };
   
@@ -48,32 +48,47 @@ export default function WorkflowNodeEditor({
     const { name, value } = e.target;
     setFormData(prev => ({...prev, [name]: value}));
   }
+  
+  const isAgentNode = node.type === 'agent';
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent className="bg-background border-l-border/60 sm:max-w-[525px]">
         <SheetHeader>
-          <SheetTitle>Edit Agent Node</SheetTitle>
+          <SheetTitle>Edit {isAgentNode ? 'Agent' : 'Task'} Node</SheetTitle>
           <SheetDescription>
-            Modify the properties of your selected agent node.
+            Modify the properties of your selected node.
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-6">
-          <div className="grid gap-2">
-            <Label htmlFor="role">Role</Label>
-            <Input id="role" name="role" value={formData.role || ''} onChange={handleInputChange} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="goal">Goal</Label>
-            <Textarea id="goal" name="goal" value={formData.goal || ''} onChange={handleInputChange} rows={3} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="backstory">Backstory</Label>
-            <Textarea id="backstory" name="backstory" value={formData.backstory || ''} onChange={handleInputChange} rows={4} />
-          </div>
-         
-          {/* We can add editors for Tools and Tasks here later */}
-
+          {isAgentNode ? (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="role">Role</Label>
+                <Input id="role" name="role" value={(formData as Agent).role || ''} onChange={handleInputChange} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="goal">Goal</Label>
+                <Textarea id="goal" name="goal" value={(formData as Agent).goal || ''} onChange={handleInputChange} rows={3} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="backstory">Backstory</Label>
+                <Textarea id="backstory" name="backstory" value={(formData as Agent).backstory || ''} onChange={handleInputChange} rows={4} />
+              </div>
+            </>
+          ) : (
+            <>
+               <div className="grid gap-2">
+                <Label htmlFor="name">Task Name</Label>
+                <Input id="name" name="name" value={(formData as Task).name || ''} onChange={handleInputChange} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="instructions">Instructions</Label>
+                <Textarea id="instructions" name="instructions" value={(formData as Task).instructions || ''} onChange={handleInputChange} rows={4} />
+              </div>
+            </>
+          )}
+          
           <SheetFooter>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel

@@ -21,5 +21,13 @@ export interface Agent {
   goal: string;
   backstory: string;
   tools: Tool[];
-  tasks: Task[];
+}
+
+export type NodeType = 'agent' | 'task';
+
+export interface Node {
+  id: string;
+  type: NodeType;
+  position: { x: number; y: number };
+  data: Agent | Task;
 }
