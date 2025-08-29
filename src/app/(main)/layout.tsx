@@ -1,7 +1,7 @@
 "use client"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Settings, Wrench, Bot } from 'lucide-react';
+import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -14,16 +14,27 @@ import {
   SidebarInset,
   SidebarTrigger,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 
-const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/agents', label: 'Agent 面板', icon: Users },
-  { href: '/tools', label: '工具面板', icon: Wrench },
-  { href: '/settings', label: '设置面板', icon: Settings },
-];
+const menuItems = {
+  build: [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/agents', label: 'Agent 面板', icon: Users },
+    { href: '/tools', label: '工具面板', icon: Wrench },
+  ],
+  operate: [
+    { href: '/traces', label: 'Traces', icon: Spline },
+    { href: '/llm-connections', label: 'LLM Connections', icon: BrainCircuit },
+  ],
+  manage: [
+    { href: '/settings', label: '设置面板', icon: Settings },
+    { href: '/resources', label: 'Resources', icon: Container },
+  ]
+};
 
 export default function MainLayout({
   children,
@@ -48,20 +59,57 @@ export default function MainLayout({
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {menuItems.map(({ href, label, icon: Icon }) => (
-              <SidebarMenuItem key={href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith(href)}
-                  tooltip={{ children: label }}
-                >
-                  <Link href={href}>
-                    <Icon />
-                    <span>{label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            <SidebarGroup>
+              <SidebarGroupLabel>Build</SidebarGroupLabel>
+              {menuItems.build.map(({ href, label, icon: Icon }) => (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(href)}
+                    tooltip={{ children: label }}
+                  >
+                    <Link href={href}>
+                      <Icon />
+                      <span>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Operate</SidebarGroupLabel>
+              {menuItems.operate.map(({ href, label, icon: Icon }) => (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(href)}
+                    tooltip={{ children: label }}
+                  >
+                    <Link href={href}>
+                      <Icon />
+                      <span>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Manage</SidebarGroupLabel>
+              {menuItems.manage.map(({ href, label, icon: Icon }) => (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(href)}
+                    tooltip={{ children: label }}
+                  >
+                    <Link href={href}>
+                      <Icon />
+                      <span>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroup>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className='group-data-[collapsible=icon]:hidden'>
