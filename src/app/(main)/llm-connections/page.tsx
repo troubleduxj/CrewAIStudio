@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GeminiLogo, OpenAIColorLogo, DeepseekLogo } from '@/components/ui/logos';
-import { BrainCircuit, CheckCircle, XCircle } from 'lucide-react';
+import { BrainCircuit, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { saveApiKey, testApiKey, getApiKeys } from '@/app/actions';
@@ -45,18 +45,34 @@ const ConnectionForm = ({
   </form>
 );
 
-const ApiKeyField = ({ id, label = "API Key", value, onChange }: { id: string, label?: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-  <div className="space-y-2">
-    <Label htmlFor={id}>{label}</Label>
-    <Input
-      id={id}
-      type="password"
-      placeholder="••••••••••••••••••••••••"
-      value={value}
-      onChange={onChange}
-    />
-  </div>
-);
+const ApiKeyField = ({ id, label = "API Key", value, onChange }: { id: string, label?: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const toggleVisibility = () => setIsVisible(!isVisible);
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Input
+          id={id}
+          type={isVisible ? 'text' : 'password'}
+          placeholder="••••••••••••••••••••••••"
+          value={value}
+          onChange={onChange}
+          className="pr-10"
+        />
+        <button
+          type="button"
+          onClick={toggleVisibility}
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+          aria-label={isVisible ? "Hide API Key" : "Show API Key"}
+        >
+          {isVisible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 
 export default function LLMConnectionsPage() {
