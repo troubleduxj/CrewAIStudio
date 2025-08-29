@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { User, ListChecks, Cog } from 'lucide-react';
+import { User, ListChecks, Cog, PanelRightOpen, PanelRightClose } from 'lucide-react';
 
 const availableAgents = [
     { id: 'agent-3', role: 'Financial Analyst' },
@@ -20,13 +20,21 @@ const availableTools = [
     { name: 'Database Reader' },
 ];
 
-export default function WorkflowToolPanel() {
+interface WorkflowToolPanelProps {
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+}
+
+export default function WorkflowToolPanel({ isOpen, setIsOpen }: WorkflowToolPanelProps) {
   return (
     <Card className="h-full flex flex-col rounded-none border-0 shadow-none">
-      <CardHeader>
-        <CardTitle>Toolbox</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className={isOpen ? '' : 'hidden'}>Toolbox</CardTitle>
+        <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <PanelRightClose /> : <PanelRightOpen />}
+        </Button>
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto">
+      <CardContent className={`flex-1 overflow-y-auto ${isOpen ? '' : 'hidden'}`}>
         <Accordion type="multiple" defaultValue={['agents', 'tasks']} className="w-full">
           <AccordionItem value="agents">
             <AccordionTrigger>Agents</AccordionTrigger>
