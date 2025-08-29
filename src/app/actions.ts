@@ -4,6 +4,11 @@ import {
   adjustTaskParameters,
   type AdjustTaskParametersInput,
 } from '@/ai/flows/adjust-task-parameters';
+import {
+  research,
+  type ResearchInput,
+} from '@/ai/flows/research-analyst';
+
 import type { Crew } from '@/lib/types';
 
 export async function handleAdjustTaskParameters(
@@ -37,6 +42,21 @@ export async function startCrewExecution(crew: Crew) {
 
   } catch(error) {
     console.error('Error starting crew execution:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred.',
+    };
+  }
+}
+
+export async function handleResearch(
+  input: ResearchInput,
+) {
+  try {
+    const result = await research(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in research flow:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unknown error occurred.',

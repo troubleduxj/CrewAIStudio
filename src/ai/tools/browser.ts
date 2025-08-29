@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview A browser tool that allows an agent to read the content of a webpage.
  *

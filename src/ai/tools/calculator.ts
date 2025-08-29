@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileOverview A calculator tool for performing mathematical calculations.
  *

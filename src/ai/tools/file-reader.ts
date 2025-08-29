@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview A file reader tool for reading the content of local files.
  *
