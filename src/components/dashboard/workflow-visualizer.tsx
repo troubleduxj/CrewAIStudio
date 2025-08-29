@@ -17,16 +17,16 @@ type Vector2 = { x: number; y: number };
 export const initialAgents: Agent[] = [
   {
     id: 'agent-1',
-    role: 'Data Analyst',
-    goal: 'Analyze sales data',
-    backstory: 'An expert in data analysis and visualization.',
-    tools: ['file_reader', 'calculator'],
+    role: 'AI Research Specialist',
+    goal: 'Identify the latest trends and technologies in AI Agents by conducting thorough web research and analysis.',
+    backstory: 'An expert in AI, with a knack for identifying emerging patterns and technologies in the field.',
+    tools: ['browser'],
   },
   {
     id: 'agent-2',
-    role: 'Web Researcher',
-    goal: 'Find market trends',
-    backstory: 'Skilled in browsing the web for information.',
+    role: 'Insightful Content Strategist',
+    goal: 'Develop a compelling content strategy based on the research findings to attract a tech-savvy audience.',
+    backstory: 'A creative strategist who translates complex technical information into engaging and accessible content.',
     tools: [],
   },
 ];
@@ -35,31 +35,21 @@ export const initialTasks: Task[] = [
     {
         id: 'task-1',
         agentId: 'agent-1',
-        name: 'Load Sales Data',
-        instructions: 'Load the sales data from `sales_data.csv`.',
+        name: 'Research AI Agent Trends',
+        instructions: 'Investigate and summarize the top 3 emerging trends in AI Agent technology for 2024. Focus on new architectures, capabilities, and popular use cases.',
         dependencies: [],
-        status: 'completed',
-        progress: 100,
+        status: 'pending',
+        progress: 0,
         logs: [],
       },
       {
         id: 'task-2',
-        agentId: 'agent-1',
-        name: 'Calculate Q1 Revenue',
-        instructions: 'Calculate the total revenue for the first quarter.',
-        dependencies: ['task-1'],
-        status: 'completed',
-        progress: 100,
-        logs: [],
-      },
-      {
-        id: 'task-3',
         agentId: 'agent-2',
-        name: 'Research Competitors',
-        instructions: 'Research top 3 competitors in the market.',
-        dependencies: [],
-        status: 'in_progress',
-        progress: 50,
+        name: 'Formulate Content Strategy',
+        instructions: 'Using the research on AI Agent trends, create a content plan for a blog and social media. The plan should include 3 blog post ideas with brief outlines and 5 social media post concepts.',
+        dependencies: ['task-1'],
+        status: 'pending',
+        progress: 0,
         logs: [],
       },
 ]
@@ -68,33 +58,27 @@ const initialNodes: Node[] = [
   {
     id: 'agent-1',
     type: 'agent',
-    position: { x: 200, y: 150 },
+    position: { x: 200, y: 200 },
     data: initialAgents[0],
   },
   {
     id: 'agent-2',
     type: 'agent',
-    position: { x: 200, y: 450 },
+    position: { x: 200, y: 500 },
     data: initialAgents[1],
   },
   {
       id: 'task-1',
       type: 'task',
-      position: {x: 550, y: 100},
+      position: {x: 550, y: 200},
       data: initialTasks[0]
   },
   {
       id: 'task-2',
       type: 'task',
-      position: {x: 550, y: 230},
+      position: {x: 550, y: 330},
       data: initialTasks[1]
   },
-  {
-      id: 'task-3',
-      type: 'task',
-      position: {x: 550, y: 450},
-      data: initialTasks[2]
-  }
 ];
 
 const toolIcons: Record<Tool, React.ReactNode> = {
@@ -275,30 +259,47 @@ export default function WorkflowVisualizer() {
   };
 
   const getConnections = () => {
-    const connections = [];
-    const tasksWithAgents = initialTasks.filter(t => t.agentId);
-    tasksWithAgents.forEach(task => {
+    const connections: {source: string, target: string}[] = [];
+    const tasks = nodes.filter(n => n.type === 'task').map(n => n.data as Task);
+    
+    tasks.forEach(task => {
         if(task.agentId) {
             connections.push({source: task.agentId, target: task.id});
         }
+        if(task.dependencies) {
+            task.dependencies.forEach(depId => {
+                connections.push({source: depId, target: task.id})
+            })
+        }
     });
+
     return connections;
   }
 
   const connections = getConnections();
 
-  const getPath = (sourceNode, targetNode) => {
+  const getPath = (sourceNode: Node, targetNode: Node) => {
     if (!sourceNode || !targetNode) return '';
-    const sourcePos = sourceNode.position;
-    const targetPos = targetNode.position;
-    // Adjust for node dimensions, this is an approximation
-    const sourceY = sourcePos.y + 100; // bottom of agent node
-    const targetY = targetPos.y - 35; // top of task node
-    const sourceX = sourcePos.x;
-    const targetX = targetPos.x;
 
-    return `M ${sourceX} ${sourceY} C ${sourceX} ${sourceY + 50} ${targetX} ${targetY - 50} ${targetX} ${targetY}`;
+    const isSourceAgent = sourceNode.type === 'agent';
+    
+    const sourceHandle = {
+        x: sourceNode.position.x + (isSourceAgent ? 0 : 144), // right handle for tasks
+        y: sourceNode.position.y + (isSourceAgent ? 100 : 0), // bottom for agents, middle for tasks
+    }
+    const targetHandle = {
+        x: targetNode.position.x - 144, // left handle for tasks
+        y: targetNode.position.y
+    }
+   
+    const C1_X = sourceHandle.x + Math.abs(targetHandle.x - sourceHandle.x) * 0.5;
+    const C1_Y = sourceHandle.y;
+    const C2_X = targetHandle.x - Math.abs(targetHandle.x - sourceHandle.x) * 0.5;
+    const C2_Y = targetHandle.y;
+    
+    return `M ${sourceHandle.x} ${sourceHandle.y} C ${C1_X} ${C1_Y} ${C2_X} ${C2_Y} ${targetHandle.x} ${targetHandle.y}`;
   }
+
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
@@ -332,7 +333,7 @@ export default function WorkflowVisualizer() {
 
   return (
     <>
-      <div className="h-full overflow-hidden shadow-none rounded-none border-0 border-r">
+      <div className="h-full overflow-hidden shadow-none rounded-none border-0">
         <CardContent className="p-0 h-full">
           <div
             ref={containerRef}
@@ -411,13 +412,14 @@ export default function WorkflowVisualizer() {
                          <BrainCircuit className="w-4 h-4 text-muted-foreground" />
                          <span className="text-muted-foreground">LLM</span>
                        </div>
-                       <Select defaultValue="gemini-2.5-flash">
+                       <Select defaultValue="deepseek-chat">
                          <SelectTrigger className='h-8 text-xs'>
                            <SelectValue placeholder="Select LLM" />
                          </SelectTrigger>
                          <SelectContent>
                            <SelectItem value="gemini-2.5-flash">gemini-2.5-flash</SelectItem>
                            <SelectItem value="gpt-4o">gpt-4o</SelectItem>
+                           <SelectItem value="deepseek-chat">deepseek-chat</SelectItem>
                          </SelectContent>
                        </Select>
                      </div>
@@ -462,7 +464,7 @@ export default function WorkflowVisualizer() {
                         <p className="text-xs text-muted-foreground mt-1 truncate">{(node.data as Task).instructions}</p>
                         <Handle id={`${node.id}-top`} position="-top-1.5 left-1/2 -translate-x-1/2" />
                         <Handle id={`${node.id}-left`} position="-left-1.5 top-1/2 -translate-y-1/2" />
-                        <Handle id={`${node.id}-right`} position="-right-1.5 top-1/2 -translate-y-1_2" />
+                        <Handle id={`${node.id}-right`} position="right-[-7px] top-1/2 -translate-y-1/2" />
                     </>
                 )}
               </div>
