@@ -10,9 +10,10 @@ import {
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
 import type { Agent, Task, Tool, Node } from '@/lib/types';
-import { Cog, ListChecks, User, Network } from 'lucide-react';
+import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical } from 'lucide-react';
 import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { Badge } from '../ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type Vector2 = { x: number; y: number };
 
@@ -70,31 +71,31 @@ const initialNodes: Node[] = [
   {
     id: 'agent-1',
     type: 'agent',
-    position: { x: 150, y: 100 },
+    position: { x: 200, y: 150 },
     data: initialAgents[0],
   },
   {
     id: 'agent-2',
     type: 'agent',
-    position: { x: 150, y: 350 },
+    position: { x: 200, y: 450 },
     data: initialAgents[1],
   },
   {
       id: 'task-1',
       type: 'task',
-      position: {x: 450, y: 50},
+      position: {x: 550, y: 100},
       data: initialTasks[0]
   },
   {
       id: 'task-2',
       type: 'task',
-      position: {x: 450, y: 180},
+      position: {x: 550, y: 230},
       data: initialTasks[1]
   },
   {
       id: 'task-3',
       type: 'task',
-      position: {x: 450, y: 350},
+      position: {x: 550, y: 450},
       data: initialTasks[2]
   }
 ];
@@ -200,9 +201,14 @@ export default function WorkflowVisualizer() {
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>, nodeId: string) => {
+    // Prevent panel from opening on drag start
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).closest('[data-radix-select-trigger]')) {
+        return;
+    }
+    
     e.preventDefault();
     e.stopPropagation();
-
+    
     const node = getNode(nodeId);
     if (!node) return;
 
@@ -254,13 +260,19 @@ export default function WorkflowVisualizer() {
     if (!sourceNode || !targetNode) return '';
     const sourcePos = sourceNode.position;
     const targetPos = targetNode.position;
-    return `M ${sourcePos.x} ${sourcePos.y} C ${sourcePos.x + 100} ${sourcePos.y} ${targetPos.x - 100} ${targetPos.y} ${targetPos.x} ${targetPos.y}`;
+    // Adjust for node dimensions, this is an approximation
+    const sourceY = sourcePos.y + 100; // bottom of agent node
+    const targetY = targetPos.y - 35; // top of task node
+    const sourceX = sourcePos.x;
+    const targetX = targetPos.x;
+
+    return `M ${sourceX} ${sourceY} C ${sourceX} ${sourceY + 50} ${targetX} ${targetY - 50} ${targetX} ${targetY}`;
   }
 
 
   return (
     <>
-      <Card className="h-full min-h-[600px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
+      <Card className="h-full min-h-[700px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Network
@@ -278,7 +290,7 @@ export default function WorkflowVisualizer() {
         <CardContent>
           <div
             ref={containerRef}
-            className="relative w-full h-[500px] bg-background/50 rounded-lg border border-border/40 overflow-hidden select-none"
+            className="relative w-full h-[600px] bg-background/50 rounded-lg border border-border/40 overflow-hidden"
             onClick={() => setSelectedNodeId(null)}
           >
             <svg className="absolute w-full h-full" pointerEvents="none">
@@ -294,13 +306,13 @@ export default function WorkflowVisualizer() {
                     <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--primary))" />
                 </marker>
               </defs>
-              {connections.map(({source, target}) => {
+              {connections.map(({source, target}, index) => {
                 const sourceNode = getNode(source);
                 const targetNode = getNode(target);
                 if (!sourceNode || !targetNode) return null;
                 const path = getPath(sourceNode, targetNode);
                 return (
-                    <path key={`${source}-${target}`} d={path} stroke="hsl(var(--primary))" strokeWidth="2" fill="none" markerEnd='url(#arrowhead)' />
+                    <path key={`${source}-${target}-${index}`} d={path} stroke="hsl(var(--primary))" strokeWidth="2" fill="none" markerEnd='url(#arrowhead)' />
                 )
               })}
             </svg>
@@ -312,8 +324,8 @@ export default function WorkflowVisualizer() {
                 className={cn(
                   'absolute p-4 rounded-lg shadow-lg transition-all border-2 bg-card cursor-grab',
                   selectedNodeId === node.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-primary' : 'border-border/60',
-                  draggingNode === node.id && 'cursor-grabbing shadow-2xl scale-105',
-                  node.type === 'agent' ? 'w-64' : 'w-72'
+                  draggingNode === node.id && 'cursor-grabbing shadow-2xl scale-105 z-10',
+                  node.type === 'agent' ? 'w-72' : 'w-72'
                 )}
                 style={{
                   left: node.position.x,
@@ -322,14 +334,35 @@ export default function WorkflowVisualizer() {
                 }}
               >
                 {node.type === 'agent' && 'data' in node && (
-                  <>
+                  <div className='space-y-3'>
                     <div className="flex items-center gap-3">
                       <User className="w-5 h-5 text-primary" />
-                      <div className="font-bold text-primary">{(node.data as Agent).role}</div>
+                      <div className="font-bold text-primary flex-1 truncate">{(node.data as Agent).role}</div>
+                      <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
                     </div>
-                     <div className="flex items-center gap-2 mt-2">
-                        <Cog className="w-4 h-4 text-muted-foreground" />
-                        <div className="flex flex-wrap gap-1">
+                    
+                    <div className="space-y-2">
+                       <div className='flex items-center gap-2 text-sm'>
+                         <BrainCircuit className="w-4 h-4 text-muted-foreground" />
+                         <span className="text-muted-foreground">LLM</span>
+                       </div>
+                       <Select defaultValue="gemini-2.5-flash">
+                         <SelectTrigger className='h-8 text-xs'>
+                           <SelectValue placeholder="Select LLM" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="gemini-2.5-flash">gemini-2.5-flash</SelectItem>
+                           <SelectItem value="gpt-4o">gpt-4o</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+
+                     <div className="space-y-2">
+                       <div className='flex items-center gap-2 text-sm'>
+                         <Cog className="w-4 h-4 text-muted-foreground" />
+                         <span className="text-muted-foreground">Tools</span>
+                       </div>
+                       <div className="flex flex-wrap gap-1.5">
                           {(node.data as Agent).tools.map(tool => (
                             <Badge key={tool} variant="secondary" className="flex items-center gap-1.5 pl-2">
                               {toolIcons[tool]}
@@ -337,15 +370,21 @@ export default function WorkflowVisualizer() {
                             </Badge>
                           ))}
                         </div>
-                      </div>
+                       <div 
+                         className='mt-2 h-16 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground bg-background/50'
+                       >
+                         Drag tools here
+                       </div>
+                     </div>
                     <Handle id={`${node.id}-bottom`} position="-bottom-1.5 left-1/2 -translate-x-1/2" />
-                  </>
+                  </div>
                 )}
                 {node.type === 'task' && 'data' in node && (
                     <>
                         <div className="flex items-center gap-3">
                             <ListChecks className="w-5 h-5 text-primary" />
-                            <div className="font-bold text-primary">{(node.data as Task).name}</div>
+                            <div className="font-bold text-primary flex-1 truncate">{(node.data as Task).name}</div>
+                            <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 truncate">{(node.data as Task).instructions}</p>
                         <Handle id={`${node.id}-top`} position="-top-1.5 left-1/2 -translate-x-1/2" />
