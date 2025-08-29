@@ -15,6 +15,8 @@ export interface Task {
   startTime?: number;
   endTime?: number;
   logs: string[];
+  verbose?: boolean;
+  cache?: boolean;
 }
 
 export interface Agent {
@@ -24,6 +26,7 @@ export interface Agent {
   backstory: string;
   tools: Tool[];
   llm: string;
+  memory?: boolean;
 }
 
 export type NodeType = 'agent' | 'task';
@@ -66,6 +69,7 @@ export const AgentSchema = z.object({
   backstory: z.string(),
   tools: z.array(z.custom<Tool>()),
   llm: z.string(),
+  memory: z.boolean().optional().default(true),
 });
 
 export const TaskSchema = z.object({
@@ -76,6 +80,8 @@ export const TaskSchema = z.object({
   dependencies: z.array(z.string()),
   status: z.custom<TaskStatus>(),
   progress: z.number(),
+  verbose: z.boolean().optional().default(true),
+  cache: z.boolean().optional().default(true),
 });
 
 export const TaskExecutionInputSchema = z.object({

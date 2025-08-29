@@ -1,6 +1,12 @@
-
 import { executeTask } from '@/app/actions';
-import type { Crew, ExecutionEvent } from '@/lib/types';
+import type { Crew, ExecutionEvent, Task } from '@/lib/types';
+import crypto from 'crypto';
+
+function generateCacheKey(task: Task, context: string): string {
+  const hash = crypto.createHash('sha256');
+  hash.update(task.instructions + context);
+  return hash.digest('hex');
+}
 
 // This is a client-side utility that orchestrates server actions.
 // This allows us to stream events back to the UI.
@@ -15,7 +21,9 @@ export async function startCrewExecution(
     details: 'Crew execution initialized.',
   });
 
-  let taskOutputs: { [taskId: string]: string } = {};
+  const taskOutputs: { [taskId: string]: string } = {};
+  const cache: { [key: string]: string } = {};
+  let overallContextHistory = '';
 
   for (const task of crew.tasks) {
     const agent = crew.agents.find(a => a.id === task.agentId);
@@ -30,20 +38,24 @@ export async function startCrewExecution(
       throw new Error(errorDetails);
     }
 
-    // Check dependencies
-    let hydratedInstructions = task.instructions;
-    if (task.dependencies && task.dependencies.length > 0) {
-      let allDependenciesMet = true;
-      let context = '';
+    let context = '';
+    // Memory: If agent has memory, use the full history. Otherwise, use only direct dependencies.
+    if (agent.memory) {
+      context = overallContextHistory;
+    } else if (task.dependencies && task.dependencies.length > 0) {
+      let depContext = '';
       for (const depId of task.dependencies) {
-        if (!taskOutputs[depId]) {
-          allDependenciesMet = false;
-          break;
+        if (taskOutputs[depId]) {
+          depContext += `\n\nContext from task "${depId}":\n${taskOutputs[depId]}`;
         }
-        context += `\n\nContext from task "${depId}":\n${taskOutputs[depId]}`;
       }
+      context = depContext;
+    }
 
-      if (!allDependenciesMet) {
+    // Check dependencies are met before proceeding
+    if (task.dependencies && task.dependencies.length > 0) {
+      const dependenciesMet = task.dependencies.every(depId => taskOutputs[depId]);
+      if (!dependenciesMet) {
         const errorDetails = `Task "${task.name}" skipped because its dependencies are not met.`;
         onEvent({
           type: 'error',
@@ -51,39 +63,69 @@ export async function startCrewExecution(
           event: 'Task Skipped',
           details: errorDetails,
         });
-        continue;
+        continue; // Skip this task
       }
+    }
+    
+    const hydratedInstructions = task.instructions + context;
 
-      hydratedInstructions += context;
+    // Cache: Check if result for this task exists
+    const cacheKey = generateCacheKey(task, context);
+    if (task.cache && cache[cacheKey]) {
+      const cachedOutput = cache[cacheKey];
+      taskOutputs[task.id] = cachedOutput;
+      overallContextHistory += `\n\nContext from task "${task.name}":\n${cachedOutput}`;
+      
+      if (task.verbose) {
+        onEvent({
+          type: 'info',
+          timestamp: new Date().toLocaleTimeString(),
+          event: 'Task Result from Cache',
+          details: `Task: ${task.name}, Output: ${cachedOutput.substring(0,100)}...`,
+        });
+      }
+      continue; // Move to the next task
     }
 
-    onEvent({
-      type: 'task',
-      timestamp: new Date().toLocaleTimeString(),
-      event: 'Task Started',
-      details: `Agent: ${agent.role}, Task: ${task.name}`,
-    });
+    if (task.verbose) {
+      onEvent({
+        type: 'task',
+        timestamp: new Date().toLocaleTimeString(),
+        event: 'Task Started',
+        details: `Agent: ${agent.role}, Task: ${task.name}`,
+      });
+    }
+
 
     try {
       const result = await executeTask({
         agent,
         task: { ...task, instructions: hydratedInstructions },
       });
-      taskOutputs[task.id] = result.output;
+      const taskOutput = result.output;
+      taskOutputs[task.id] = taskOutput;
+      overallContextHistory += `\n\nContext from task "${task.name}":\n${taskOutput}`;
+      
+      // Cache: Store the result
+      if (task.cache) {
+        cache[cacheKey] = taskOutput;
+      }
 
-      onEvent({
-        type: 'task',
-        timestamp: new Date().toLocaleTimeString(),
-        event: 'Task Completed',
-        details: `Agent: ${agent.role}, Task: ${task.name}`,
-      });
+      if (task.verbose) {
+        onEvent({
+          type: 'task',
+          timestamp: new Date().toLocaleTimeString(),
+          event: 'Task Completed',
+          details: `Agent: ${agent.role}, Task: ${task.name}`,
+        });
 
-      onEvent({
-        type: 'tool', // Simulating tool output as a separate event
-        timestamp: new Date().toLocaleTimeString(),
-        event: 'Task Output',
-        details: result.output,
-      });
+        onEvent({
+          type: 'tool', // Simulating tool output as a separate event
+          timestamp: new Date().toLocaleTimeString(),
+          event: 'Task Output',
+          details: taskOutput,
+        });
+      }
     } catch (error) {
       const errorDetails = `Task "${
         task.name
