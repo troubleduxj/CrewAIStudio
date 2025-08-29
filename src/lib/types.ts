@@ -86,3 +86,11 @@ export const TaskExecutionOutputSchema = z.object({
   output: z.string().describe('The result or output of the task execution.'),
 });
 export type TaskExecutionOutput = z.infer<typeof TaskExecutionOutputSchema>;
+
+
+export interface ExecutionEvent {
+    type: 'info' | 'task' | 'tool' | 'error';
+    timestamp: string;
+    event: string;
+    details: string;
+}

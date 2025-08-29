@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -6,68 +7,10 @@ import {
 } from '@/ai/flows/adjust-task-parameters';
 import { research } from '@/ai/flows/research-analyst';
 import { executeTask } from '@/ai/flows/task-execution-flow';
-import type { Crew, ResearchInput, Agent, Task } from '@/lib/types';
+import type { ResearchInput } from '@/lib/types';
 import fs from 'fs/promises';
 import path from 'path';
 
-export async function handleAdjustTaskParameters(
-  input: AdjustTaskParametersInput
-) {
-  try {
-    const result = await adjustTaskParameters(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('Error in adjustTaskParameters flow:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'An unknown error occurred.',
-    };
-  }
-}
-
-export async function startCrewExecution(crew: Crew) {
-  try {
-    console.log('Received crew for execution on server:', crew);
-
-    for (const task of crew.tasks) {
-      const agent = crew.agents.find(a => a.id === task.agentId);
-      if (!agent) {
-        console.error(`Agent with ID ${task.agentId} not found for task ${task.id}`);
-        continue;
-      }
-
-      console.log(`Executing task "${task.name}" with agent "${agent.role}"...`);
-
-      const result = await executeTask({ agent, task });
-
-      console.log(`Task "${task.name}" finished with result:`, result.output);
-    }
-
-    return { success: true, message: 'Crew execution started successfully.' };
-  } catch (error) {
-    console.error('Error starting crew execution:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'An unknown error occurred.',
-    };
-  }
-}
-
-export async function handleResearch(input: ResearchInput) {
-  try {
-    const result = await research(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('Error in research flow:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'An unknown error occurred.',
-    };
-  }
-}
 
 export async function saveApiKey({
   provider,
@@ -142,3 +85,36 @@ export async function saveApiKey({
     return { success: false, error: 'Failed to save API key.' };
   }
 }
+
+export async function handleAdjustTaskParameters(
+  input: AdjustTaskParametersInput
+) {
+  try {
+    const result = await adjustTaskParameters(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in adjustTaskParameters flow:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
+    };
+  }
+}
+
+export async function handleResearch(input: ResearchInput) {
+  try {
+    const result = await research(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in research flow:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
+    };
+  }
+}
+
+// Export the server-side task execution function
+export { executeTask };
