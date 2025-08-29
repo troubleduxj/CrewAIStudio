@@ -79,11 +79,12 @@ const statusConfig: Record<TaskStatus, { dot: string; text: string }> = {
 
 export default function StatusMonitor() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [time, setTime] = useState(() => Date.now());
+  const [time, setTime] = useState(0);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    setTime(Date.now());
   }, []);
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function StatusMonitor() {
   }, [isClient]);
 
   const getDuration = (task: Task) => {
-    if (!task.startTime) return '-';
+    if (!task.startTime || !isClient) return '-';
     const endTime = task.endTime || time;
     const duration = Math.round((endTime - task.startTime) / 1000);
     return `${duration}s`;
