@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { User, ListChecks, Cog } from 'lucide-react';
+import type { Tool } from '@/lib/types';
+import { DragEvent } from 'react';
 
 const availableAgents = [
     { id: 'agent-3', role: 'Financial Analyst' },
@@ -15,11 +17,17 @@ const availableTasks = [
     { id: 'task-6', name: 'Create Marketing Plan' },
 ];
 
-const availableTools = [
-    { name: 'API Connector' },
-    { name: 'Database Reader' },
+const availableTools: {name: Tool, label: string}[] = [
+    { name: 'browser', label: 'Browser' },
+    { name: 'calculator', label: 'Calculator' },
+    { name: 'file_reader', label: 'File Reader' },
 ];
 
+const handleDragStart = (e: DragEvent, tool: {name: Tool, label: string}) => {
+  const toolData = JSON.stringify({ name: tool.name });
+  e.dataTransfer.setData('application/json', toolData);
+  e.dataTransfer.effectAllowed = 'move';
+}
 
 export default function WorkflowToolPanel() {
   return (
@@ -28,7 +36,7 @@ export default function WorkflowToolPanel() {
         <CardTitle>Toolbox</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
-        <Accordion type="multiple" defaultValue={['agents', 'tasks']} className="w-full">
+        <Accordion type="multiple" defaultValue={['agents', 'tasks', 'tools']} className="w-full">
           <AccordionItem value="agents">
             <AccordionTrigger>Agents</AccordionTrigger>
             <AccordionContent>
@@ -60,9 +68,15 @@ export default function WorkflowToolPanel() {
             <AccordionContent>
               <div className="space-y-2">
                 {availableTools.map(tool => (
-                    <Button key={tool.name} variant="outline" className="w-full justify-start gap-2">
+                    <Button 
+                      key={tool.name} 
+                      variant="outline" 
+                      className="w-full justify-start gap-2 cursor-grab"
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, tool)}
+                    >
                         <Cog className="w-4 h-4" />
-                        {tool.name}
+                        {tool.label}
                     </Button>
                 ))}
               </div>

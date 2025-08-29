@@ -11,7 +11,7 @@ import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
 import type { Agent, Task, Tool, Node } from '@/lib/types';
 import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical, Trash2, Pencil } from 'lucide-react';
-import React, { useState, useRef, MouseEvent, useEffect } from 'react';
+import React, { useState, useRef, MouseEvent, useEffect, DragEvent } from 'react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
@@ -197,7 +197,6 @@ export default function WorkflowVisualizer() {
 
   const handleNodeClick = (nodeId: string) => {
     if (wasDragged.current) {
-        wasDragged.current = false;
         return;
     }
     setSelectedNodeId(nodeId);
@@ -302,6 +301,35 @@ export default function WorkflowVisualizer() {
     const targetX = targetPos.x;
 
     return `M ${sourceX} ${sourceY} C ${sourceX} ${sourceY + 50} ${targetX} ${targetY - 50} ${targetX} ${targetY}`;
+  }
+
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }
+
+  const handleDrop = (e: DragEvent, targetNodeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const toolData = e.dataTransfer.getData("application/json");
+    if(!toolData) return;
+
+    const { name: toolName } = JSON.parse(toolData) as {name: Tool};
+
+    setNodes(prevNodes => prevNodes.map(node => {
+      if (node.id === targetNodeId && node.type === 'agent') {
+        const agentData = node.data as Agent;
+        if (!agentData.tools.includes(toolName)) {
+          const newTools = [...agentData.tools, toolName];
+          return {
+            ...node,
+            data: { ...agentData, tools: newTools }
+          }
+        }
+      }
+      return node;
+    }));
   }
 
 
@@ -416,22 +444,27 @@ export default function WorkflowVisualizer() {
                          <Cog className="w-4 h-4 text-muted-foreground" />
                          <span className="text-muted-foreground">Tools</span>
                        </div>
-                       {(node.data as Agent).tools.length > 0 ? (
-                        <div className="mt-2 p-2 min-h-[72px] rounded-md border-2 border-solid border-border/50 flex flex-wrap gap-2 items-center justify-start bg-background/50">
-                          {(node.data as Agent).tools.map(tool => (
-                            <Badge key={tool} variant="secondary" className="flex items-center gap-1.5 pl-2">
-                              {toolIcons[tool]}
-                              {tool}
-                            </Badge>
-                          ))}
-                        </div>
-                       ) : (
-                        <div 
-                          className='mt-2 h-16 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground bg-background/50'
-                        >
-                          Drag tools here
-                        </div>
-                       )}
+                       <div 
+                         onDragOver={handleDragOver} 
+                         onDrop={(e) => handleDrop(e, node.id)}
+                       >
+                         {(node.data as Agent).tools.length > 0 ? (
+                           <div className="mt-2 p-2 min-h-[72px] rounded-md border-2 border-solid border-border/50 flex flex-wrap gap-2 items-center justify-start bg-background/50">
+                             {(node.data as Agent).tools.map(tool => (
+                               <Badge key={tool} variant="secondary" className="flex items-center gap-1.5 pl-2">
+                                 {toolIcons[tool]}
+                                 {tool}
+                               </Badge>
+                             ))}
+                           </div>
+                         ) : (
+                           <div 
+                             className='mt-2 h-16 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground bg-background/50'
+                           >
+                             Drag tools here
+                           </div>
+                         )}
+                       </div>
                      </div>
                     <Handle id={`${node.id}-bottom`} position="-bottom-1.5 left-1/2 -translate-x-1/2" />
                   </div>
