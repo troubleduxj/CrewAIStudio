@@ -30,7 +30,7 @@ const initialAgents: Agent[] = [
     role: 'Web Researcher',
     goal: 'Find market trends',
     backstory: 'Skilled in browsing the web for information.',
-    tools: ['browser'],
+    tools: [],
   },
 ];
 
@@ -206,7 +206,6 @@ export default function WorkflowVisualizer() {
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>, nodeId: string) => {
-    // Prevent panel from opening on drag start
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).closest('[data-radix-select-trigger]')) {
         return;
     }
@@ -369,7 +368,8 @@ export default function WorkflowVisualizer() {
                          <Cog className="w-4 h-4 text-muted-foreground" />
                          <span className="text-muted-foreground">Tools</span>
                        </div>
-                       <div className="flex flex-wrap gap-1.5">
+                       {(node.data as Agent).tools.length > 0 ? (
+                        <div className="mt-2 p-2 min-h-[72px] rounded-md border-2 border-solid border-border/50 flex flex-wrap gap-2 items-center justify-start bg-background/50">
                           {(node.data as Agent).tools.map(tool => (
                             <Badge key={tool} variant="secondary" className="flex items-center gap-1.5 pl-2">
                               {toolIcons[tool]}
@@ -377,11 +377,13 @@ export default function WorkflowVisualizer() {
                             </Badge>
                           ))}
                         </div>
-                       <div 
-                         className='mt-2 h-16 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground bg-background/50'
-                       >
-                         Drag tools here
-                       </div>
+                       ) : (
+                        <div 
+                          className='mt-2 h-16 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center text-xs text-muted-foreground bg-background/50'
+                        >
+                          Drag tools here
+                        </div>
+                       )}
                      </div>
                     <Handle id={`${node.id}-bottom`} position="-bottom-1.5 left-1/2 -translate-x-1/2" />
                   </div>
