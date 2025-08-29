@@ -7,14 +7,14 @@ import {
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
 import type { Agent, Task, Tool, Node } from '@/lib/types';
-import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical, Trash2, Pencil } from 'lucide-react';
+import { Cog, ListChecks, User, BrainCircuit, GripVertical, Trash2, Pencil } from 'lucide-react';
 import React, { useState, useRef, MouseEvent, useEffect, DragEvent } from 'react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type Vector2 = { x: number; y: number };
 
-const initialAgents: Agent[] = [
+export const initialAgents: Agent[] = [
   {
     id: 'agent-1',
     role: 'Data Analyst',
@@ -31,7 +31,7 @@ const initialAgents: Agent[] = [
   },
 ];
 
-const initialTasks: Task[] = [
+export const initialTasks: Task[] = [
     {
         id: 'task-1',
         agentId: 'agent-1',
@@ -332,7 +332,7 @@ export default function WorkflowVisualizer() {
 
   return (
     <>
-      <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden shadow-none rounded-none border-0 border-r">
+      <div className="h-full bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden shadow-none rounded-none border-0 border-r">
         <CardContent className="p-0 h-full">
           <div
             ref={containerRef}
@@ -469,7 +469,7 @@ export default function WorkflowVisualizer() {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </div>
       {selectedNode && (
         <WorkflowNodeEditor
           node={selectedNode}

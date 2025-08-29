@@ -31,3 +31,8 @@ export interface Node {
   position: { x: number; y: number };
   data: Agent | Task;
 }
+
+export interface Crew {
+  agents: Agent[];
+  tasks: Task[];
+}
