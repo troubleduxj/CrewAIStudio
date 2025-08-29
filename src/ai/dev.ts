@@ -9,3 +9,11 @@ import '@/ai/flows/task-execution-flow.ts';
 import '@/ai/tools/browser.ts';
 import '@/ai/tools/calculator.ts';
 import '@/ai/tools/file-reader.ts';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+
+genkit({
+    plugins: [
+        googleAI(),
+    ]
+})

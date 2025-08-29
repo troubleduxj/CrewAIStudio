@@ -12,7 +12,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import { genkit, type GenkitError } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-// The openai and deepseek imports are removed as the packages are not available.
 
 export async function saveApiKey({
   provider,
@@ -106,7 +105,6 @@ export async function testApiKey({
             // Cannot test OpenAI without the plugin
             return { success: false, error: 'Testing for OpenAI is not supported at this time.' };
         } else if (provider === 'deepseek') {
-            // Cannot test Deepseek without the plugin
             return { success: false, error: 'Testing for Deepseek is not supported at this time.' };
         } else {
             return { success: false, error: 'Unsupported provider.' };
