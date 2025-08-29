@@ -14,14 +14,18 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GeminiLogo, OpenAIColorLogo, DeepseekLogo } from '@/components/ui/logos';
 import { BrainCircuit } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { saveApiKey } from '@/app/actions';
 
 const ConnectionForm = ({
   children,
   onSubmit,
+  isSaving,
 }: {
   children: React.ReactNode;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isSaving: boolean;
 }) => (
   <form
     onSubmit={onSubmit}
@@ -29,30 +33,62 @@ const ConnectionForm = ({
   >
     {children}
     <div className="flex justify-end">
-      <Button type="submit">Save Configuration</Button>
+      <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Configuration'}</Button>
     </div>
   </form>
 );
 
-const ApiKeyField = ({ id, label = "API Key" }: { id: string, label?: string }) => (
+const ApiKeyField = ({ id, label = "API Key", value, onChange }: { id: string, label?: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
   <div className="space-y-2">
     <Label htmlFor={id}>{label}</Label>
     <Input
       id={id}
       type="password"
       placeholder="••••••••••••••••••••••••"
+      value={value}
+      onChange={onChange}
     />
   </div>
 );
 
 
 export default function LLMConnectionsPage() {
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [openAiApiKey, setOpenAiApiKey] = useState('');
+  const [openAiOrgId, setOpenAiOrgId] = useState('');
+  const [deepseekApiKey, setDeepseekApiKey] = useState('');
+
   
-  const handleSubmit = (provider: string) => (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (provider: 'gemini' | 'openai' | 'deepseek') => async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(`Configuration saved for ${provider}`);
-    // Here you would typically handle the form submission,
-    // e.g., send data to your backend.
+    setIsSaving(true);
+
+    let result;
+    if (provider === 'gemini') {
+        result = await saveApiKey({ provider, apiKey: geminiApiKey });
+    } else if (provider === 'openai') {
+        result = await saveApiKey({ provider, apiKey: openAiApiKey, orgId: openAiOrgId });
+    } else {
+        result = await saveApiKey({ provider, apiKey: deepseekApiKey });
+    }
+    
+    if (result.success) {
+        toast({
+            title: "Success",
+            description: result.message,
+        });
+    } else {
+        toast({
+            title: "Error",
+            description: result.error,
+            variant: "destructive",
+        })
+    }
+
+    setIsSaving(false);
   };
 
   return (
@@ -90,8 +126,8 @@ export default function LLMConnectionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConnectionForm onSubmit={handleSubmit('Gemini')}>
-                    <ApiKeyField id="gemini-api-key" />
+                <ConnectionForm onSubmit={handleSubmit('gemini')} isSaving={isSaving}>
+                    <ApiKeyField id="gemini-api-key" value={geminiApiKey} onChange={e => setGeminiApiKey(e.target.value)} />
                 </ConnectionForm>
               </CardContent>
             </Card>
@@ -105,11 +141,11 @@ export default function LLMConnectionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConnectionForm onSubmit={handleSubmit('OpenAI')}>
-                    <ApiKeyField id="openai-api-key" />
+                <ConnectionForm onSubmit={handleSubmit('openai')} isSaving={isSaving}>
+                    <ApiKeyField id="openai-api-key" value={openAiApiKey} onChange={e => setOpenAiApiKey(e.target.value)} />
                     <div className="space-y-2">
                         <Label htmlFor="openai-org-id">Organization ID (Optional)</Label>
-                        <Input id="openai-org-id" placeholder="org-..." />
+                        <Input id="openai-org-id" placeholder="org-..." value={openAiOrgId} onChange={e => setOpenAiOrgId(e.target.value)} />
                     </div>
                 </ConnectionForm>
               </CardContent>
@@ -124,8 +160,8 @@ export default function LLMConnectionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConnectionForm onSubmit={handleSubmit('Deepseek')}>
-                    <ApiKeyField id="deepseek-api-key" />
+                <ConnectionForm onSubmit={handleSubmit('deepseek')} isSaving={isSaving}>
+                    <ApiKeyField id="deepseek-api-key" value={deepseekApiKey} onChange={e => setDeepseekApiKey(e.target.value)} />
                 </ConnectionForm>
               </CardContent>
             </Card>
