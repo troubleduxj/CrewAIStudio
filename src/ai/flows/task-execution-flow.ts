@@ -30,9 +30,7 @@ const taskExecutionFlow = ai.defineFlow(
     outputSchema: TaskExecutionOutputSchema,
   },
   async ({ agent, task }) => {
-    const prompt = ai.definePrompt({
-      name: 'taskExecutionPrompt',
-      prompt: `You are an AI agent. Here is your configuration:
+    const prompt = `You are an AI agent. Here is your configuration:
 Role: ${agent.role}
 Goal: ${agent.goal}
 Backstory: ${agent.backstory}
@@ -42,12 +40,11 @@ Task Name: ${task.name}
 Instructions: ${task.instructions}
 
 Execute the task based on your configuration and the provided instructions. Provide only the final output or result of the task.
-`,
-    });
+`;
 
-    const { output } = await ai.generate({
+    const {output} = await ai.generate({
       model: agent.llm as ModelReference,
-      prompt: (await prompt()).prompt,
+      prompt: prompt,
     });
     
     // Assuming the output is a string. If it's structured, you might need to adjust.
