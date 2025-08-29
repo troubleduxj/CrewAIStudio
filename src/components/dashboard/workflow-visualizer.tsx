@@ -7,12 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
+import { cn } from '@/lib/utils';
 import { ListChecks, Network, User } from 'lucide-react';
-import React, { useState, useRef, MouseEvent } from 'react';
+import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 
 type Vector2 = { x: number; y: number };
 
-type Node = {
+export type Node = {
   id: string;
   pos: Vector2;
   type: 'agent' | 'task';
@@ -66,30 +68,51 @@ const nodeHeight = 68;
 
 export default function WorkflowVisualizer() {
   const [nodes, setNodes] = useState<Node[]>([...initialAgents, ...initialTasks]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggingNode, setDraggingNode] = useState<string | null>(null);
   const dragOffset = useRef<Vector2>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  const getNodePos = (id: string) => {
-    return nodes.find(n => n.id === id)?.pos || { x: 0, y: 0 };
+  useEffect(() => {
+    setIsEditorOpen(!!selectedNodeId);
+  }, [selectedNodeId]);
+
+  const getNode = (id: string) => {
+    return nodes.find(n => n.id === id);
+  };
+  
+  const selectedNode = selectedNodeId ? getNode(selectedNodeId) : null;
+
+  const handleNodeClick = (nodeId: string) => {
+    setSelectedNodeId(nodeId);
+  };
+  
+  const handleSave = (updatedNode: Node) => {
+    setNodes(prevNodes => prevNodes.map(n => n.id === updatedNode.id ? updatedNode : n));
+    setSelectedNodeId(null);
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>, nodeId: string) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const nodePos = getNodePos(nodeId);
+    const node = getNode(nodeId);
+    if(!node) return;
+    
+    handleNodeClick(nodeId);
+
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (!containerRect) return;
 
     setDraggingNode(nodeId);
     dragOffset.current = {
-      x: e.clientX - containerRect.left - nodePos.x,
-      y: e.clientY - containerRect.top - nodePos.y,
+      x: e.clientX - containerRect.left - node.pos.x,
+      y: e.clientY - containerRect.top - node.pos.y,
     };
 
     const handleMouseMove = (me: globalThis.MouseEvent) => {
-       if (!containerRect) return;
+      if (!containerRect) return;
       const newX = me.clientX - containerRect.left - dragOffset.current.x;
       const newY = me.clientY - containerRect.top - dragOffset.current.y;
       
@@ -112,6 +135,7 @@ export default function WorkflowVisualizer() {
 
 
   return (
+    <>
     <Card className="h-full min-h-[500px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
       <CardHeader>
         <div className="flex items-center gap-3">
@@ -130,7 +154,8 @@ export default function WorkflowVisualizer() {
       <CardContent>
         <div 
           ref={containerRef} 
-          className="relative w-full h-[400px] bg-background/30 rounded-lg border border-border/40 overflow-hidden select-none"
+          className="relative w-full h-[400px] bg-background/50 rounded-lg border border-border/40 overflow-hidden select-none"
+          onClick={() => setSelectedNodeId(null)}
         >
           <svg
             className="absolute top-0 left-0 w-full h-full"
@@ -152,16 +177,21 @@ export default function WorkflowVisualizer() {
             {/* Task dependency lines */}
             {nodes.filter(n => n.type === 'task' && n.data.deps.length > 0).flatMap(taskNode =>
                 taskNode.data.deps.map((depId: string) => {
-                const fromPos = getNodePos(depId);
-                const toPos = getNodePos(taskNode.id);
+                const fromNode = getNode(depId);
+                const toNode = getNode(taskNode.id);
+                if (!fromNode || !toNode) return null;
+                const fromPos = fromNode.pos;
+                const toPos = toNode.pos;
+
+                const fromX = fromPos.x + nodeWidth / 2;
+                const fromY = fromPos.y;
+                const toX = toPos.x - nodeWidth / 2;
+                const toY = toPos.y;
+                
                 return (
                   <path
                     key={`${depId}-${taskNode.id}`}
-                    d={`M ${fromPos.x + nodeWidth / 2},${fromPos.y} C ${
-                      fromPos.x + nodeWidth / 2 + 50
-                    },${fromPos.y} ${toPos.x - nodeWidth / 2 - 50},${toPos.y} ${
-                      toPos.x - nodeWidth / 2
-                    },${toPos.y}`}
+                    d={`M ${fromX},${fromY} C ${fromX + 50},${fromY} ${toX - 50},${toY} ${toX},${toY}`}
                     stroke="hsl(var(--border))"
                     strokeWidth="1.5"
                     fill="none"
@@ -172,8 +202,12 @@ export default function WorkflowVisualizer() {
             )}
              {/* Agent to Task lines */}
             {nodes.filter(n => n.type === 'task').map(taskNode => {
-              const fromPos = getNodePos(taskNode.data.agentId);
-              const toPos = getNodePos(taskNode.id);
+              const fromNode = getNode(taskNode.data.agentId);
+              const toNode = getNode(taskNode.id);
+              if (!fromNode || !toNode) return null;
+              const fromPos = fromNode.pos;
+              const toPos = toNode.pos;
+              
               return (
                 <line
                   key={`${taskNode.data.agentId}-${taskNode.id}`}
@@ -192,8 +226,14 @@ export default function WorkflowVisualizer() {
           {nodes.map(node => (
             <div
               key={node.id}
+              onClick={(e) => { e.stopPropagation(); handleNodeClick(node.id); }}
               onMouseDown={(e) => handleMouseDown(e, node.id)}
-              className={`absolute flex items-center gap-3 p-3 rounded-lg shadow-lg cursor-grab ${draggingNode === node.id ? 'cursor-grabbing ring-2 ring-primary' : 'cursor-grab'} ${node.type === 'agent' ? 'border-2 border-primary bg-card' : 'border border-accent bg-card'}`}
+              className={cn(
+                'absolute flex items-center gap-3 p-3 rounded-lg shadow-lg cursor-grab transition-all',
+                draggingNode === node.id ? 'cursor-grabbing' : 'cursor-grab',
+                selectedNodeId === node.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : '',
+                node.type === 'agent' ? 'border-2 border-primary bg-card' : 'border border-accent bg-card'
+              )}
               style={{
                 left: node.pos.x,
                 top: node.pos.y,
@@ -224,5 +264,17 @@ export default function WorkflowVisualizer() {
         </div>
       </CardContent>
     </Card>
+      {selectedNode && (
+        <WorkflowNodeEditor
+          node={selectedNode}
+          isOpen={isEditorOpen}
+          setIsOpen={(open) => {
+            if (!open) setSelectedNodeId(null);
+            setIsEditorOpen(open);
+          }}
+          onSave={handleSave}
+        />
+      )}
+    </>
   );
 }

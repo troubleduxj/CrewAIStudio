@@ -26,7 +26,7 @@ const menuItems = {
     { href: '/workflow', label: '工作流面板', icon: Network },
     { href: '/agents', label: 'Agent 面板', icon: Users },
     { href: '/tasks', label: 'Task 面板', icon: ListChecks },
-    { href: '/tools', label: 'Tools 面板', icon: Wrench },
+    { href: '/tools', label: '工具面板', icon: Wrench },
   ],
   operate: [
     { href: '/traces', label: 'Traces', icon: Spline },
