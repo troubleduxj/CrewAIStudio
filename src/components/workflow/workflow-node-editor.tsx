@@ -41,6 +41,7 @@ export default function WorkflowNodeEditor({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({ ...node, data: formData });
+    setIsOpen(false);
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -48,37 +49,30 @@ export default function WorkflowNodeEditor({
     setFormData(prev => ({...prev, [name]: value}));
   }
 
-  const isAgent = node.type === 'agent';
-
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent className="bg-background border-l-border/60 sm:max-w-[525px]">
         <SheetHeader>
-          <SheetTitle>Edit {isAgent ? 'Agent' : 'Task'}</SheetTitle>
+          <SheetTitle>Edit Agent Node</SheetTitle>
           <SheetDescription>
-            Modify the properties of your selected node.
+            Modify the properties of your selected agent node.
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-6">
-          {isAgent ? (
-            <div className="grid gap-2">
-              <Label htmlFor="role">Role</Label>
-              <Input id="role" name="role" value={formData.role || ''} onChange={handleInputChange} />
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="name">Task Name</Label>
-                <Input id="name" name="name" value={formData.name || ''} onChange={handleInputChange} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="instructions">Instructions</Label>
-                <Textarea id="instructions" name="instructions" value={formData.instructions || ''} onChange={handleInputChange} rows={4} />
-              </div>
-            </>
-          )}
-
-          {/* Add more fields for Agent/Task Tools, Dependencies etc. here */}
+          <div className="grid gap-2">
+            <Label htmlFor="role">Role</Label>
+            <Input id="role" name="role" value={formData.role || ''} onChange={handleInputChange} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="goal">Goal</Label>
+            <Textarea id="goal" name="goal" value={formData.goal || ''} onChange={handleInputChange} rows={3} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="backstory">Backstory</Label>
+            <Textarea id="backstory" name="backstory" value={formData.backstory || ''} onChange={handleInputChange} rows={4} />
+          </div>
+         
+          {/* We can add editors for Tools and Tasks here later */}
 
           <SheetFooter>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>

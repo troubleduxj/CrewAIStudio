@@ -1,7 +1,7 @@
 "use client";
 
-import type { Agent, Tool } from '@/lib/types';
-import { Cog, Pencil, PlusCircle, Users } from 'lucide-react';
+import type { Agent, Tool, Task } from '@/lib/types';
+import { Cog, Pencil, PlusCircle, Users, ListChecks } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ const mockAgents: Agent[] = [
     goal: 'Analyze sales data to find key performance indicators',
     backstory: 'An expert in data analysis and visualization, with a knack for finding hidden patterns in large datasets.',
     tools: ['file_reader', 'calculator'],
+    tasks: [],
   },
   {
     id: 'agent-2',
@@ -38,6 +39,7 @@ const mockAgents: Agent[] = [
     goal: 'Find market trends and competitor strategies',
     backstory: 'A skilled operative in the digital world, capable of sifting through vast amounts of web data to find actionable intelligence.',
     tools: ['browser'],
+    tasks: [],
   },
 ];
 
@@ -121,13 +123,18 @@ export default function AgentsPage() {
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAgent: Agent = {
+    const newAgentData = {
       id: editingAgent?.id || `agent-${Date.now()}`,
       role: formData.get('role') as string,
       goal: formData.get('goal') as string,
       backstory: formData.get('backstory') as string,
       tools: formData.getAll('tools') as Tool[],
     };
+
+    const newAgent: Agent = {
+      ...newAgentData,
+      tasks: editingAgent?.tasks || [],
+    }
 
     if (editingAgent) {
       setAgents(agents.map(a => (a.id === newAgent.id ? newAgent : a)));
@@ -279,5 +286,3 @@ function AgentEditorSheet({
     </Sheet>
   );
 }
-
-    

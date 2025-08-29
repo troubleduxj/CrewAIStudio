@@ -1,13 +1,5 @@
 export type Tool = 'browser' | 'calculator' | 'file_reader';
 
-export interface Agent {
-  id: string;
-  role: string;
-  goal: string;
-  backstory: string;
-  tools: Tool[];
-}
-
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'error';
 
 export interface Task {
@@ -21,4 +13,13 @@ export interface Task {
   startTime?: number;
   endTime?: number;
   logs: string[];
+}
+
+export interface Agent {
+  id: string;
+  role: string;
+  goal: string;
+  backstory: string;
+  tools: Tool[];
+  tasks: Task[];
 }
