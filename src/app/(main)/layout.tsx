@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 const menuItems = {
   build: [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/workflow', label: 'Workflow', icon: Network },
+    { href: '/workflow', label: '工作流面板', icon: Network },
     { href: '/agents', label: 'Agent 面板', icon: Users },
     { href: '/tasks', label: 'Task 面板', icon: ListChecks },
     { href: '/tools', label: '工具面板', icon: Wrench },

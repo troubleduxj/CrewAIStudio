@@ -2,7 +2,7 @@
 
 import type { Agent, Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { GitBranch, ListChecks, User } from 'lucide-react';
+import { GitBranch, ListChecks, User, PlusCircle, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import {
   Accordion,
@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Button } from '../ui/button';
 
 const mockAgents: Agent[] = [
   {
@@ -108,28 +109,26 @@ export default function TaskEditor() {
     mockAgents.find(a => a.id === agentId)?.role || 'Unknown Agent';
 
   return (
-    <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <ListChecks
-            className="w-6 h-6 text-accent"
-            style={{ filter: 'drop-shadow(0 0 5px hsl(var(--accent)))' }}
-          />
-          <div>
-            <CardTitle>Task Definition</CardTitle>
-            <CardDescription>
-              Define and manage tasks for each agent.
-            </CardDescription>
+    <Card className="h-full bg-card/80">
+       <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ListChecks />
+            <div>
+              <CardTitle>Task 面板</CardTitle>
+              <CardDescription>在这里管理和配置您的 Task。</CardDescription>
+            </div>
           </div>
-        </div>
-      </CardHeader>
+          <Button size="sm">
+            <PlusCircle className="mr-2 h-4 w-4" /> 新增 Task
+          </Button>
+        </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full">
           {tasks.map(task => (
             <AccordionItem value={task.id} key={task.id} className="border-border/50">
-              <AccordionTrigger className="hover:no-underline font-medium">
+              <AccordionTrigger className="hover:no-underline font-medium text-base group">
                 <div className="flex items-center gap-4 w-full">
-                  <Badge
+                   <Badge
                     className={cn('w-28 justify-center', statusConfig[task.status].badgeClass)}
                   >
                     {statusConfig[task.status].label}
@@ -141,6 +140,9 @@ export default function TaskEditor() {
                     <User className="h-4 w-4" />
                     <span>{getAgentRole(task.agentId)}</span>
                   </div>
+                   <Button variant="ghost" size="icon" className='opacity-0 group-hover:opacity-100 transition-opacity'>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-3 bg-background/30 p-4 rounded-b-md">
