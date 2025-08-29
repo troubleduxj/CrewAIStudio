@@ -162,7 +162,7 @@ const toolIcons: Record<Tool, React.ReactNode> = {
   ),
 };
 
-const Handle = ({ id, position }) => (
+const Handle = ({ id, position }: { id: string, position: string }) => (
     <div
       id={id}
       className={cn(
@@ -180,6 +180,7 @@ export default function WorkflowVisualizer() {
   const dragOffset = useRef<Vector2>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const wasDragged = useRef(false);
 
   useEffect(() => {
     setIsEditorOpen(!!selectedNodeId);
@@ -192,6 +193,10 @@ export default function WorkflowVisualizer() {
   const selectedNode = selectedNodeId ? getNode(selectedNodeId) : null;
 
   const handleNodeClick = (nodeId: string) => {
+    if (wasDragged.current) {
+        wasDragged.current = false;
+        return;
+    }
     setSelectedNodeId(nodeId);
   };
 
@@ -208,6 +213,7 @@ export default function WorkflowVisualizer() {
     
     e.preventDefault();
     e.stopPropagation();
+    wasDragged.current = false;
     
     const node = getNode(nodeId);
     if (!node) return;
@@ -223,6 +229,7 @@ export default function WorkflowVisualizer() {
 
     const handleMouseMove = (me: globalThis.MouseEvent) => {
       if (!containerRect) return;
+      wasDragged.current = true;
       const newX = me.clientX - containerRect.left - dragOffset.current.x;
       const newY = me.clientY - containerRect.top - dragOffset.current.y;
 
