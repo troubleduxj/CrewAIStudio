@@ -3,9 +3,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
@@ -336,24 +333,10 @@ export default function WorkflowVisualizer() {
   return (
     <>
       <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden shadow-none rounded-none border-0 border-r">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Network
-              className="w-6 h-6 text-accent"
-              style={{ filter: 'drop-shadow(0 0 5px hsl(var(--accent)))' }}
-            />
-            <div>
-              <CardTitle>工作流面板</CardTitle>
-              <CardDescription>
-                可视化 AI Agent 工作流，可拖动节点进行编排。
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 h-full">
           <div
             ref={containerRef}
-            className="relative w-full h-[calc(100vh-theme(spacing.14)-theme(spacing.24))] bg-background/50 overflow-hidden"
+            className="relative w-full h-full bg-background/50 overflow-hidden"
             onClick={() => setSelectedNodeId(null)}
           >
             <svg className="absolute w-full h-full" pointerEvents="none">
