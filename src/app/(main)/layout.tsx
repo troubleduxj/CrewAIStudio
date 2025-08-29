@@ -1,7 +1,7 @@
 "use client"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container } from 'lucide-react';
+import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container, ListChecks } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -25,6 +25,7 @@ const menuItems = {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/agents', label: 'Agent 面板', icon: Users },
     { href: '/tools', label: '工具面板', icon: Wrench },
+    { href: '/tasks', label: 'Task 面板', icon: ListChecks },
   ],
   operate: [
     { href: '/traces', label: 'Traces', icon: Spline },
