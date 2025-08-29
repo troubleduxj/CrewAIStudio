@@ -78,18 +78,17 @@ const statusConfig: Record<TaskStatus, { dot: string; text: string }> = {
 };
 
 export default function StatusMonitor() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [time, setTime] = useState(() => Date.now());
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setTasks(initialTasks.map(t => ({
-      ...t,
-      startTime: t.startTime ? t.startTime - (initialTasks[0].startTime! - time) : undefined,
-      endTime: t.endTime ? t.endTime - (initialTasks[0].startTime! - time) : undefined,
-    })));
+  }, []);
 
+  useEffect(() => {
+    if (!isClient) return;
+  
     const timer = setInterval(() => {
       setTime(Date.now());
       setTasks(currentTasks =>
@@ -111,7 +110,7 @@ export default function StatusMonitor() {
       );
     }, 2000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isClient]);
 
   const getDuration = (task: Task) => {
     if (!task.startTime) return '-';
@@ -121,7 +120,62 @@ export default function StatusMonitor() {
   };
 
   if (!isClient) {
-    return null;
+    // Render a placeholder or skeleton on the server
+    return (
+      <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Activity
+              className="w-6 h-6 text-accent"
+              style={{ filter: 'drop-shadow(0 0 5px hsl(var(--accent)))' }}
+            />
+            <div>
+              <CardTitle>Real-time Status</CardTitle>
+              <CardDescription>Monitor the progress of each task.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50%]">Task</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+            {initialTasks.map(task => (
+              <TableRow key={task.id}>
+                <TableCell>
+                  <div className="font-medium">{task.name}</div>
+                   <Progress
+                    value={task.progress}
+                    className="h-1.5 mt-1 [&>div]:bg-accent"
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                     <span
+                      className={cn('h-2.5 w-2.5 rounded-full', statusConfig[task.status].dot)}
+                    />
+                    <span
+                      className={cn('capitalize', statusConfig[task.status].text)}
+                    >
+                      {task.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  -
+                </TableCell>
+              </TableRow>
+            ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
