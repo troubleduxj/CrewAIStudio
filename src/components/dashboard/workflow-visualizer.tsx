@@ -10,7 +10,7 @@ import {
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
 import type { Agent, Task, Tool, Node } from '@/lib/types';
-import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical } from 'lucide-react';
+import { Cog, ListChecks, User, Network, BrainCircuit, GripVertical, Trash2 } from 'lucide-react';
 import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -199,6 +199,15 @@ export default function WorkflowVisualizer() {
     }
     setSelectedNodeId(nodeId);
   };
+  
+  const handleDeleteNode = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation(); // Prevent click from bubbling to the node
+    setNodes(prev => prev.filter(n => n.id !== nodeId));
+    if(selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+    }
+  }
+
 
   const handleSave = (updatedNode: Node) => {
     setNodes(prevNodes => prevNodes.map(n => n.id === updatedNode.id ? updatedNode : n));
@@ -339,6 +348,16 @@ export default function WorkflowVisualizer() {
                   transform: 'translate(-50%, -50%)',
                 }}
               >
+                {selectedNodeId === node.id && (
+                  <button
+                    onClick={(e) => handleDeleteNode(e, node.id)}
+                    className="absolute -top-3 -right-3 z-20 bg-destructive text-destructive-foreground rounded-full p-1.5 hover:bg-destructive/90 transition-colors shadow-md"
+                    aria-label="Delete Node"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+
                 {node.type === 'agent' && 'data' in node && (
                   <div className='space-y-3'>
                     <div className="flex items-center gap-3">
