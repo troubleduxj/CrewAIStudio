@@ -9,39 +9,16 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { Agent, Task } from '@/lib/types';
-import { z } from 'genkit';
+import {
+  TaskExecutionInput,
+  TaskExecutionInputSchema,
+  TaskExecutionOutput,
+  TaskExecutionOutputSchema,
+} from '@/lib/types';
 
-const AgentSchema = z.object({
-  id: z.string(),
-  role: z.string(),
-  goal: z.string(),
-  backstory: z.string(),
-  tools: z.array(z.string()),
-});
-
-const TaskSchema = z.object({
-  id: z.string(),
-  agentId: z.string(),
-  name: z.string(),
-  instructions: z.string(),
-  dependencies: z.array(z.string()),
-  status: z.string(),
-  progress: z.number(),
-});
-
-export const TaskExecutionInputSchema = z.object({
-  agent: AgentSchema,
-  task: TaskSchema,
-});
-export type TaskExecutionInput = z.infer<typeof TaskExecutionInputSchema>;
-
-export const TaskExecutionOutputSchema = z.object({
-  output: z.string().describe('The result or output of the task execution.'),
-});
-export type TaskExecutionOutput = z.infer<typeof TaskExecutionOutputSchema>;
-
-export async function executeTask(input: TaskExecutionInput): Promise<TaskExecutionOutput> {
+export async function executeTask(
+  input: TaskExecutionInput
+): Promise<TaskExecutionOutput> {
   return taskExecutionFlow(input);
 }
 
