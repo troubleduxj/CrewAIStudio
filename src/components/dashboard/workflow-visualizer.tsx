@@ -8,54 +8,108 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ListChecks, Network, User } from 'lucide-react';
+import React, { useState, useRef, MouseEvent } from 'react';
 
-const agents = [
-  { id: 'agent-1', role: 'Data Analyst', pos: { x: 100, y: 120 } },
-  { id: 'agent-2', role: 'Web Researcher', pos: { x: 100, y: 320 } },
+type Vector2 = { x: number; y: number };
+
+type Node = {
+  id: string;
+  pos: Vector2;
+  type: 'agent' | 'task';
+  data: any;
+};
+
+const initialAgents: Node[] = [
+  { 
+    id: 'agent-1', 
+    type: 'agent',
+    pos: { x: 100, y: 120 }, 
+    data: { role: 'Data Analyst' } 
+  },
+  { 
+    id: 'agent-2', 
+    type: 'agent',
+    pos: { x: 100, y: 320 }, 
+    data: { role: 'Web Researcher' } 
+  },
 ];
 
-const tasks = [
+const initialTasks: Node[] = [
   {
     id: 'task-1',
-    name: 'Load Sales Data',
-    agentId: 'agent-1',
-    deps: [],
+    type: 'task',
     pos: { x: 350, y: 50 },
+    data: { name: 'Load Sales Data', agentId: 'agent-1', deps: [] },
   },
   {
     id: 'task-2',
-    name: 'Calculate Q1 Revenue',
-    agentId: 'agent-1',
-    deps: ['task-1'],
+    type: 'task',
     pos: { x: 600, y: 120 },
+    data: { name: 'Calculate Q1 Revenue', agentId: 'agent-1', deps: ['task-1'] },
   },
   {
     id: 'task-3',
-    name: 'Research Competitors',
-    agentId: 'agent-2',
-    deps: [],
+    type: 'task',
     pos: { x: 350, y: 320 },
+    data: { name: 'Research Competitors', agentId: 'agent-2', deps: [] },
   },
   {
     id: 'task-4',
-    name: 'Generate Sales Report',
-    agentId: 'agent-1',
-    deps: ['task-2', 'task-3'],
+    type: 'task',
     pos: { x: 850, y: 220 },
+    data: { name: 'Generate Sales Report', agentId: 'agent-1', deps: ['task-2', 'task-3'] },
   },
 ];
 
+const nodeWidth = 220;
+const nodeHeight = 68;
+
 export default function WorkflowVisualizer() {
+  const [nodes, setNodes] = useState<Node[]>([...initialAgents, ...initialTasks]);
+  const [draggingNode, setDraggingNode] = useState<string | null>(null);
+  const dragOffset = useRef<Vector2>({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const getNodePos = (id: string) => {
-    const agent = agents.find(a => a.id === id);
-    if (agent) return agent.pos;
-    const task = tasks.find(t => t.id === id);
-    if (task) return task.pos;
-    return { x: 0, y: 0 };
+    return nodes.find(n => n.id === id)?.pos || { x: 0, y: 0 };
   };
 
-  const nodeWidth = 220;
-  const nodeHeight = 68;
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>, nodeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const nodePos = getNodePos(nodeId);
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+
+    setDraggingNode(nodeId);
+    dragOffset.current = {
+      x: e.clientX - containerRect.left - nodePos.x,
+      y: e.clientY - containerRect.top - nodePos.y,
+    };
+
+    const handleMouseMove = (me: globalThis.MouseEvent) => {
+       if (!containerRect) return;
+      const newX = me.clientX - containerRect.left - dragOffset.current.x;
+      const newY = me.clientY - containerRect.top - dragOffset.current.y;
+      
+      setNodes(prevNodes =>
+        prevNodes.map(n =>
+          n.id === nodeId ? { ...n, pos: { x: newX, y: newY } } : n
+        )
+      );
+    };
+
+    const handleMouseUp = () => {
+      setDraggingNode(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
 
   return (
     <Card className="h-full min-h-[500px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
@@ -66,15 +120,18 @@ export default function WorkflowVisualizer() {
             style={{ filter: 'drop-shadow(0 0 5px hsl(var(--accent)))' }}
           />
           <div>
-            <CardTitle>Workflow Visualization</CardTitle>
+            <CardTitle>工作流面板</CardTitle>
             <CardDescription>
-              Visual graph of the agent workflow and task dependencies.
+              可视化 AI Agent 工作流，可拖动节点进行编排。
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative w-full h-[400px]">
+        <div 
+          ref={containerRef} 
+          className="relative w-full h-[400px] bg-background/30 rounded-lg border border-border/40 overflow-hidden select-none"
+        >
           <svg
             className="absolute top-0 left-0 w-full h-full"
             style={{ pointerEvents: 'none' }}
@@ -92,31 +149,14 @@ export default function WorkflowVisualizer() {
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--border))" />
               </marker>
             </defs>
-            {/* Agent to Task lines */}
-            {tasks.map(task => {
-              const fromPos = getNodePos(task.agentId);
-              const toPos = getNodePos(task.id);
-              return (
-                <line
-                  key={`${task.agentId}-${task.id}`}
-                  x1={fromPos.x + nodeWidth / 2}
-                  y1={fromPos.y}
-                  x2={toPos.x - nodeWidth / 2}
-                  y2={toPos.y}
-                  stroke="hsl(var(--border))"
-                  strokeWidth="1"
-                  strokeDasharray="4 4"
-                />
-              );
-            })}
             {/* Task dependency lines */}
-            {tasks.flatMap(task =>
-              task.deps.map(depId => {
+            {nodes.filter(n => n.type === 'task' && n.data.deps.length > 0).flatMap(taskNode =>
+                taskNode.data.deps.map((depId: string) => {
                 const fromPos = getNodePos(depId);
-                const toPos = getNodePos(task.id);
+                const toPos = getNodePos(taskNode.id);
                 return (
                   <path
-                    key={`${depId}-${task.id}`}
+                    key={`${depId}-${taskNode.id}`}
                     d={`M ${fromPos.x + nodeWidth / 2},${fromPos.y} C ${
                       fromPos.x + nodeWidth / 2 + 50
                     },${fromPos.y} ${toPos.x - nodeWidth / 2 - 50},${toPos.y} ${
@@ -130,45 +170,55 @@ export default function WorkflowVisualizer() {
                 );
               }),
             )}
+             {/* Agent to Task lines */}
+            {nodes.filter(n => n.type === 'task').map(taskNode => {
+              const fromPos = getNodePos(taskNode.data.agentId);
+              const toPos = getNodePos(taskNode.id);
+              return (
+                <line
+                  key={`${taskNode.data.agentId}-${taskNode.id}`}
+                  x1={fromPos.x + nodeWidth / 2}
+                  y1={fromPos.y}
+                  x2={toPos.x - nodeWidth / 2}
+                  y2={toPos.y}
+                  stroke="hsl(var(--border))"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                />
+              );
+            })}
           </svg>
 
-          {agents.map(agent => (
+          {nodes.map(node => (
             <div
-              key={agent.id}
-              className="absolute flex items-center gap-3 p-3 rounded-lg border-2 border-primary bg-card shadow-lg"
+              key={node.id}
+              onMouseDown={(e) => handleMouseDown(e, node.id)}
+              className={`absolute flex items-center gap-3 p-3 rounded-lg shadow-lg cursor-grab ${draggingNode === node.id ? 'cursor-grabbing ring-2 ring-primary' : 'cursor-grab'} ${node.type === 'agent' ? 'border-2 border-primary bg-card' : 'border border-accent bg-card'}`}
               style={{
-                left: agent.pos.x,
-                top: agent.pos.y,
+                left: node.pos.x,
+                top: node.pos.y,
                 width: `${nodeWidth}px`,
                 height: `${nodeHeight}px`,
                 transform: 'translate(-50%, -50%)',
               }}
             >
-              <User className="w-5 h-5 text-primary" />
-              <div>
-                <div className="font-bold text-sm text-primary/80">AGENT</div>
-                <div className="text-foreground">{agent.role}</div>
-              </div>
-            </div>
-          ))}
-
-          {tasks.map(task => (
-            <div
-              key={task.id}
-              className="absolute flex items-center gap-3 p-3 rounded-lg border border-accent bg-card shadow-lg"
-              style={{
-                left: task.pos.x,
-                top: task.pos.y,
-                width: `${nodeWidth}px`,
-                height: `${nodeHeight}px`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <ListChecks className="w-5 h-5 text-accent" />
-              <div>
-                <div className="font-bold text-xs text-accent/80">TASK</div>
-                <div className="text-foreground text-sm">{task.name}</div>
-              </div>
+              {node.type === 'agent' ? (
+                <>
+                  <User className="w-5 h-5 text-primary" />
+                  <div>
+                    <div className="font-bold text-sm text-primary/80">AGENT</div>
+                    <div className="text-foreground">{node.data.role}</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ListChecks className="w-5 h-5 text-accent" />
+                  <div>
+                    <div className="font-bold text-xs text-accent/80">TASK</div>
+                    <div className="text-foreground text-sm">{node.data.name}</div>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
