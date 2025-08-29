@@ -1,10 +1,5 @@
 "use client";
 
-import type { Agent, Tool } from '@/lib/types';
-import { Cog, Pencil, PlusCircle, User } from 'lucide-react';
-import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -12,131 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
+import { User, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '../ui/button';
 
-const mockAgents: Agent[] = [
-  {
-    id: 'agent-1',
-    role: 'Data Analyst',
-    goal: 'Analyze sales data to find key performance indicators',
-    backstory: 'An expert in data analysis and visualization, with a knack for finding hidden patterns in large datasets.',
-    tools: ['file_reader', 'calculator'],
-  },
-  {
-    id: 'agent-2',
-    role: 'Web Researcher',
-    goal: 'Find market trends and competitor strategies',
-    backstory: 'A skilled operative in the digital world, capable of sifting through vast amounts of web data to find actionable intelligence.',
-    tools: ['browser'],
-  },
-];
-
-const toolIcons: Record<Tool, React.ReactNode> = {
-  browser: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  ),
-  calculator: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-    >
-      <rect width="16" height="20" x="4" y="2" rx="2" />
-      <line x1="8" x2="16" y1="6" y2="6" />
-      <line x1="16" x2="16" y1="14" y2="18" />
-      <line x1="16" x2="12" y1="14" y2="14" />
-      <line x1="12" x2="12" y1="14" y2="18" />
-      <line x1="8" x2="8" y1="14" y2="18" />
-      <line x1="12" x2="8" y1="10" y2="10" />
-    </svg>
-  ),
-  file_reader: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-    >
-      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <line x1="10" y1="9" x2="8" y2="9" />
-    </svg>
-  ),
-};
 
 export default function AgentEditor() {
-  const [agents, setAgents] = useState<Agent[]>(mockAgents);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
-
-  const handleEdit = (agent: Agent) => {
-    setEditingAgent(agent);
-    setIsSheetOpen(true);
-  };
-
-  const handleAddNew = () => {
-    setEditingAgent(null);
-    setIsSheetOpen(true);
-  };
-
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const newAgent: Agent = {
-      id: editingAgent?.id || `agent-${Date.now()}`,
-      role: formData.get('role') as string,
-      goal: formData.get('goal') as string,
-      backstory: formData.get('backstory') as string,
-      tools: formData.getAll('tools') as Tool[],
-    };
-
-    if (editingAgent) {
-      setAgents(agents.map(a => (a.id === newAgent.id ? newAgent : a)));
-    } else {
-      setAgents([...agents, newAgent]);
-    }
-    setIsSheetOpen(false);
-  };
-
   return (
     <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -152,132 +28,19 @@ export default function AgentEditor() {
             </CardDescription>
           </div>
         </div>
-        <Button size="sm" onClick={handleAddNew}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Agent
-        </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {agents.map(agent => (
-            <div
-              key={agent.id}
-              className="p-4 rounded-lg border border-border/50 bg-background/50 flex items-start justify-between transition-all hover:border-primary/50"
-            >
-              <div>
-                <h3 className="font-semibold text-primary">{agent.role}</h3>
-                <p className="text-sm text-muted-foreground">{agent.goal}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Cog className="w-4 h-4 text-muted-foreground" />
-                  {agent.tools.map(tool => (
-                    <Badge
-                      key={tool}
-                      variant="secondary"
-                      className="flex items-center gap-1.5 pl-2"
-                    >
-                      {toolIcons[tool]}
-                      {tool}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => handleEdit(agent)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-        <AgentEditorSheet
-          isOpen={isSheetOpen}
-          setIsOpen={setIsSheetOpen}
-          agent={editingAgent}
-          onSave={handleSave}
-        />
+      <CardContent className="flex flex-col items-center justify-center text-center h-full -mt-6">
+        <p className="text-muted-foreground mb-4">
+          All agent management has been moved to the Agent Panel.
+        </p>
+        <Button asChild>
+          <Link href="/agents">
+            Go to Agent Panel <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );
 }
 
-function AgentEditorSheet({
-  isOpen,
-  setIsOpen,
-  agent,
-  onSave,
-}: {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  agent: Agent | null;
-  onSave: (e: React.FormEvent<HTMLFormElement>) => void;
-}) {
-  return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent className="bg-background border-l-border/60 sm:max-w-[525px]">
-        <SheetHeader>
-          <SheetTitle>{agent ? 'Edit Agent' : 'Create New Agent'}</SheetTitle>
-          <SheetDescription>
-            Configure your agent's properties. Click save when you're done.
-          </SheetDescription>
-        </SheetHeader>
-        <form onSubmit={onSave} className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">
-              Role
-            </Label>
-            <Input
-              id="role"
-              name="role"
-              defaultValue={agent?.role}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="goal" className="text-right mt-2">
-              Goal
-            </Label>
-            <Textarea
-              id="goal"
-              name="goal"
-              defaultValue={agent?.goal}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="backstory" className="text-right mt-2">
-              Backstory
-            </Label>
-            <Textarea
-              id="backstory"
-              name="backstory"
-              defaultValue={agent?.backstory}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right pt-2">Tools</Label>
-            <div className="col-span-3 space-y-2">
-              {Object.keys(toolIcons).map(tool => (
-                <div key={tool} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id={`tool-${tool}`}
-                    name="tools"
-                    value={tool}
-                    defaultChecked={agent?.tools.includes(tool as Tool)}
-                    className="accent-primary h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                  />
-                  <Label htmlFor={`tool-${tool}`} className="capitalize font-normal">
-                    {tool}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-          <SheetFooter>
-            <Button type="submit">Save changes</Button>
-          </SheetFooter>
-        </form>
-      </SheetContent>
-    </Sheet>
-  );
-}
+    
