@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Agent, Task } from './types';
 
 export type Tool = 'browser' | 'calculator' | 'file_reader';
 
@@ -50,3 +51,9 @@ export const ResearchOutputSchema = z.object({
     .describe('The final result of the research, formatted as a markdown string.'),
 });
 export type ResearchOutput = z.infer<typeof ResearchOutputSchema>;
+
+export interface TaskExecutionResult {
+    taskId: string;
+    output: string;
+    // You can add more fields here, e.g., logs, tool_usage
+}

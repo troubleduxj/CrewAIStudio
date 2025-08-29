@@ -4,16 +4,14 @@ import {
   adjustTaskParameters,
   type AdjustTaskParametersInput,
 } from '@/ai/flows/adjust-task-parameters';
-import {
-  research,
-} from '@/ai/flows/research-analyst';
-import type { Crew, ResearchInput } from '@/lib/types';
+import { research } from '@/ai/flows/research-analyst';
+import { executeTask } from '@/ai/flows/task-execution-flow';
+import type { Crew, ResearchInput, Agent, Task } from '@/lib/types';
 import fs from 'fs/promises';
 import path from 'path';
 
-
 export async function handleAdjustTaskParameters(
-  input: AdjustTaskParametersInput,
+  input: AdjustTaskParametersInput
 ) {
   try {
     const result = await adjustTaskParameters(input);
@@ -22,37 +20,42 @@ export async function handleAdjustTaskParameters(
     console.error('Error in adjustTaskParameters flow:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred.',
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
 }
-
 
 export async function startCrewExecution(crew: Crew) {
   try {
-    // This is the entry point for the crew execution.
-    // We will build out the orchestration logic here.
-    console.log("Received crew for execution on server:", crew);
+    console.log('Received crew for execution on server:', crew);
 
-    // Placeholder for orchestration logic
-    // 1. Validate the crew, agents, and tasks
-    // 2. Determine the execution order based on dependencies
-    // 3. Loop through tasks and execute them
-    
+    for (const task of crew.tasks) {
+      const agent = crew.agents.find(a => a.id === task.agentId);
+      if (!agent) {
+        console.error(`Agent with ID ${task.agentId} not found for task ${task.id}`);
+        continue;
+      }
+
+      console.log(`Executing task "${task.name}" with agent "${agent.role}"...`);
+
+      const result = await executeTask({ agent, task });
+
+      console.log(`Task "${task.name}" finished with result:`, result.output);
+    }
+
     return { success: true, message: 'Crew execution started successfully.' };
-
-  } catch(error) {
+  } catch (error) {
     console.error('Error starting crew execution:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred.',
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
 }
 
-export async function handleResearch(
-  input: ResearchInput,
-) {
+export async function handleResearch(input: ResearchInput) {
   try {
     const result = await research(input);
     return { success: true, data: result };
@@ -60,12 +63,21 @@ export async function handleResearch(
     console.error('Error in research flow:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred.',
+      error:
+        error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
 }
 
-export async function saveApiKey({ provider, apiKey, orgId }: { provider: 'gemini' | 'openai' | 'deepseek', apiKey: string, orgId?: string }) {
+export async function saveApiKey({
+  provider,
+  apiKey,
+  orgId,
+}: {
+  provider: 'gemini' | 'openai' | 'deepseek';
+  apiKey: string;
+  orgId?: string;
+}) {
   const envFileName = '.env.local';
   const envFilePath = path.join(process.cwd(), envFileName);
 
@@ -79,16 +91,16 @@ export async function saveApiKey({ provider, apiKey, orgId }: { provider: 'gemin
       }
       // File doesn't exist, will be created.
     }
-    
+
     const envConfig: Record<string, string> = {};
     envFileContent.split('\n').forEach(line => {
-        const trimmedLine = line.trim();
-        if (trimmedLine && !trimmedLine.startsWith('#')) {
-            const [key, value] = trimmedLine.split(/=(.*)/s);
-            if (key) {
-              envConfig[key.trim()] = value?.trim() || '';
-            }
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#')) {
+        const [key, value] = trimmedLine.split(/=(.*)/s);
+        if (key) {
+          envConfig[key.trim()] = value?.trim() || '';
         }
+      }
     });
 
     // Update keys for the specific provider
@@ -111,7 +123,7 @@ export async function saveApiKey({ provider, apiKey, orgId }: { provider: 'gemin
       .join('\n');
 
     await fs.writeFile(envFilePath, newEnvFileContent);
-    
+
     // Create the file if it doesn't exist for the message
     try {
       await fs.access(envFilePath);
@@ -119,7 +131,12 @@ export async function saveApiKey({ provider, apiKey, orgId }: { provider: 'gemin
       await fs.writeFile(envFilePath, newEnvFileContent);
     }
 
-    return { success: true, message: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key saved successfully.` };
+    return {
+      success: true,
+      message: `${
+        provider.charAt(0).toUpperCase() + provider.slice(1)
+      } API Key saved successfully.`,
+    };
   } catch (error) {
     console.error(`Error saving ${provider} API key:`, error);
     return { success: false, error: 'Failed to save API key.' };
