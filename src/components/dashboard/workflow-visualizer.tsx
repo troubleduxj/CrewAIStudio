@@ -64,19 +64,19 @@ const initialNodes: Node[] = [
   {
     id: 'agent-2',
     type: 'agent',
-    position: { x: 200, y: 500 },
+    position: { x: 600, y: 500 },
     data: initialAgents[1],
   },
   {
       id: 'task-1',
       type: 'task',
-      position: {x: 550, y: 200},
+      position: {x: 600, y: 200},
       data: initialTasks[0]
   },
   {
       id: 'task-2',
       type: 'task',
-      position: {x: 550, y: 330},
+      position: {x: 950, y: 330},
       data: initialTasks[1]
   },
 ];
@@ -280,22 +280,26 @@ export default function WorkflowVisualizer() {
 
   const getPath = (sourceNode: Node, targetNode: Node) => {
     if (!sourceNode || !targetNode) return '';
-
+  
     const isSourceAgent = sourceNode.type === 'agent';
-    
+    const sourceNodeWidth = 288; // w-72
+    const taskNodeHeight = 76; // Approximation of task node height
+    const agentNodeHeight = 228; // Approximation of agent node height
+
     const sourceHandle = {
-        x: sourceNode.position.x + (isSourceAgent ? 0 : 144), // right handle for tasks
-        y: sourceNode.position.y + (isSourceAgent ? 100 : 0), // bottom for agents, middle for tasks
+        x: sourceNode.position.x + (isSourceAgent ? 0 : sourceNodeWidth / 2), 
+        y: sourceNode.position.y + (isSourceAgent ? agentNodeHeight / 2 : 0),
     }
+
     const targetHandle = {
-        x: targetNode.position.x - 144, // left handle for tasks
-        y: targetNode.position.y
+        x: targetNode.position.x - (isSourceAgent ? 0 : sourceNodeWidth / 2),
+        y: targetNode.position.y - (isSourceAgent ? taskNodeHeight / 2 : 0)
     }
    
-    const C1_X = sourceHandle.x + Math.abs(targetHandle.x - sourceHandle.x) * 0.5;
-    const C1_Y = sourceHandle.y;
-    const C2_X = targetHandle.x - Math.abs(targetHandle.x - sourceHandle.x) * 0.5;
-    const C2_Y = targetHandle.y;
+    const C1_X = sourceHandle.x;
+    const C1_Y = sourceHandle.y + 80;
+    const C2_X = targetHandle.x;
+    const C2_Y = targetHandle.y - 80;
     
     return `M ${sourceHandle.x} ${sourceHandle.y} C ${C1_X} ${C1_Y} ${C2_X} ${C2_Y} ${targetHandle.x} ${targetHandle.y}`;
   }
