@@ -13,27 +13,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GeminiLogo, OpenAIColorLogo, DeepseekLogo } from '@/components/ui/logos';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, CheckCircle, XCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { saveApiKey } from '@/app/actions';
+import { saveApiKey, testApiKey } from '@/app/actions';
 
 const ConnectionForm = ({
   children,
   onSubmit,
   isSaving,
+  onTest,
+  isTesting,
 }: {
   children: React.ReactNode;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isSaving: boolean;
+  onTest: () => void;
+  isTesting: boolean;
 }) => (
   <form
     onSubmit={onSubmit}
     className="space-y-6"
   >
     {children}
-    <div className="flex justify-end">
-      <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Configuration'}</Button>
+    <div className="flex justify-end gap-2">
+      <Button type="button" variant="outline" onClick={onTest} disabled={isTesting || isSaving}>
+        {isTesting ? 'Testing...' : 'Test Connection'}
+      </Button>
+      <Button type="submit" disabled={isSaving || isTesting}>{isSaving ? 'Saving...' : 'Save Configuration'}</Button>
     </div>
   </form>
 );
@@ -55,6 +62,8 @@ const ApiKeyField = ({ id, label = "API Key", value, onChange }: { id: string, l
 export default function LLMConnectionsPage() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+
 
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [openAiApiKey, setOpenAiApiKey] = useState('');
@@ -89,6 +98,46 @@ export default function LLMConnectionsPage() {
     }
 
     setIsSaving(false);
+  };
+  
+  const handleTest = (provider: 'gemini' | 'openai' | 'deepseek') => async () => {
+    setIsTesting(true);
+    let apiKey, orgId;
+    if (provider === 'gemini') {
+        apiKey = geminiApiKey;
+    } else if (provider === 'openai') {
+        apiKey = openAiApiKey;
+        orgId = openAiOrgId;
+    } else {
+        apiKey = deepseekApiKey;
+    }
+
+    if (!apiKey) {
+        toast({
+            title: "API Key Missing",
+            description: `Please enter an API key for ${provider} to test the connection.`,
+            variant: "destructive",
+        });
+        setIsTesting(false);
+        return;
+    }
+
+    const result = await testApiKey({ provider, apiKey, orgId });
+
+    if (result.success) {
+        toast({
+            title: (<div className="flex items-center gap-2"><CheckCircle className="text-green-500" /> Connection Successful</div>),
+            description: result.message,
+        });
+    } else {
+        toast({
+            title: (<div className="flex items-center gap-2"><XCircle className="text-red-500" /> Connection Failed</div>),
+            description: result.error,
+            variant: "destructive",
+        });
+    }
+
+    setIsTesting(false);
   };
 
   return (
@@ -126,7 +175,12 @@ export default function LLMConnectionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConnectionForm onSubmit={handleSubmit('gemini')} isSaving={isSaving}>
+                <ConnectionForm 
+                    onSubmit={handleSubmit('gemini')} 
+                    isSaving={isSaving}
+                    onTest={handleTest('gemini')}
+                    isTesting={isTesting}
+                >
                     <ApiKeyField id="gemini-api-key" value={geminiApiKey} onChange={e => setGeminiApiKey(e.target.value)} />
                 </ConnectionForm>
               </CardContent>
@@ -141,7 +195,12 @@ export default function LLMConnectionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConnectionForm onSubmit={handleSubmit('openai')} isSaving={isSaving}>
+                <ConnectionForm 
+                    onSubmit={handleSubmit('openai')} 
+                    isSaving={isSaving}
+                    onTest={handleTest('openai')}
+                    isTesting={isTesting}
+                >
                     <ApiKeyField id="openai-api-key" value={openAiApiKey} onChange={e => setOpenAiApiKey(e.target.value)} />
                     <div className="space-y-2">
                         <Label htmlFor="openai-org-id">Organization ID (Optional)</Label>
@@ -160,7 +219,12 @@ export default function LLMConnectionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConnectionForm onSubmit={handleSubmit('deepseek')} isSaving={isSaving}>
+                <ConnectionForm 
+                    onSubmit={handleSubmit('deepseek')} 
+                    isSaving={isSaving}
+                    onTest={handleTest('deepseek')}
+                    isTesting={isTesting}
+                >
                     <ApiKeyField id="deepseek-api-key" value={deepseekApiKey} onChange={e => setDeepseekApiKey(e.target.value)} />
                 </ConnectionForm>
               </CardContent>

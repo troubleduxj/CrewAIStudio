@@ -60,25 +60,25 @@ const initialNodes: Node[] = [
   {
     id: 'agent-1',
     type: 'agent',
-    position: { x: 200, y: 200 },
+    position: { x: 400, y: 150 },
     data: initialAgents[0],
+  },
+  {
+    id: 'task-1',
+    type: 'task',
+    position: {x: 400, y: 400},
+    data: initialTasks[0]
   },
   {
     id: 'agent-2',
     type: 'agent',
-    position: { x: 600, y: 500 },
+    position: { x: 800, y: 150 },
     data: initialAgents[1],
-  },
-  {
-      id: 'task-1',
-      type: 'task',
-      position: {x: 600, y: 200},
-      data: initialTasks[0]
   },
   {
       id: 'task-2',
       type: 'task',
-      position: {x: 950, y: 330},
+      position: {x: 800, y: 400},
       data: initialTasks[1]
   },
 ];
@@ -282,50 +282,57 @@ export default function WorkflowVisualizer() {
 
   const getPath = (sourceNode: Node, targetNode: Node) => {
     if (!sourceNode || !targetNode) return '';
-
+  
+    const sourceIsAgent = sourceNode.type === 'agent';
     const sourceNodeWidth = 288; // w-72
-    const taskNodeHeight = 76;   // Approximation of task node height
-    const agentNodeHeight = 228; // Approximation of agent node height
-
-    const isSourceAgent = sourceNode.type === 'agent';
-    const isTargetTask = targetNode.type === 'task';
-
+    const sourceNodeHeight = sourceIsAgent ? 228 : 76;
+  
+    const targetIsTask = targetNode.type === 'task';
+    const targetNodeWidth = 288; // w-72
+    const targetNodeHeight = 76;
+  
     const sourceHandle = {
-        x: sourceNode.position.x + sourceNodeWidth / 2,
-        y: sourceNode.position.y + (isSourceAgent ? agentNodeHeight / 2 : taskNodeHeight / 2),
+      x: sourceNode.position.x,
+      y: sourceNode.position.y + sourceNodeHeight / 2,
     };
-
+  
     const targetHandle = {
-        x: targetNode.position.x - sourceNodeWidth / 2,
-        y: targetNode.position.y - taskNodeHeight / 2,
+      x: targetNode.position.x,
+      y: targetNode.position.y - targetNodeHeight / 2,
     };
-    
-    // If connecting Agent to Task, target the top handle of the task
-    if (isSourceAgent && isTargetTask) {
-        targetHandle.x = targetNode.position.x;
-        targetHandle.y = targetNode.position.y - taskNodeHeight / 2;
-    } else { // For Task-to-Task, connect side-to-side
-        sourceHandle.x = sourceNode.position.x + sourceNodeWidth / 2;
-        sourceHandle.y = sourceNode.position.y;
-        targetHandle.x = targetNode.position.x - sourceNodeWidth / 2;
-        targetHandle.y = targetNode.position.y;
+  
+    if (sourceIsAgent && targetIsTask) {
+      // Connect agent's bottom to task's top
+      sourceHandle.x = sourceNode.position.x;
+      sourceHandle.y = sourceNode.position.y + sourceNodeHeight / 2;
+      targetHandle.x = targetNode.position.x;
+      targetHandle.y = targetNode.position.y - targetNodeHeight / 2;
+    } else {
+      // Task-to-Task connection (side to side)
+      sourceHandle.x = sourceNode.position.x + sourceNodeWidth / 2;
+      sourceHandle.y = sourceNode.position.y;
+      targetHandle.x = targetNode.position.x - targetNodeWidth / 2;
+      targetHandle.y = targetNode.position.y;
     }
-
-    const C1_X = sourceHandle.x + 50;
-    const C1_Y = sourceHandle.y;
-    const C2_X = targetHandle.x - 50;
-    const C2_Y = targetHandle.y;
-    
-    if (isSourceAgent && isTargetTask) {
-        const C1_X = sourceHandle.x;
-        const C1_Y = sourceHandle.y + 80;
-        const C2_X = targetHandle.x;
-        const C2_Y = targetHandle.y - 80;
-        return `M ${sourceHandle.x} ${sourceHandle.y} C ${C1_X} ${C1_Y} ${C2_X} ${C2_Y} ${targetHandle.x} ${targetHandle.y}`;
+  
+    let C1_X, C1_Y, C2_X, C2_Y;
+  
+    if (sourceIsAgent && targetIsTask) {
+      // Vertical curve
+      C1_X = sourceHandle.x;
+      C1_Y = sourceHandle.y + 80;
+      C2_X = targetHandle.x;
+      C2_Y = targetHandle.y - 80;
+    } else {
+      // Horizontal curve
+      C1_X = sourceHandle.x + 80;
+      C1_Y = sourceHandle.y;
+      C2_X = targetHandle.x - 80;
+      C2_Y = targetHandle.y;
     }
-
+  
     return `M ${sourceHandle.x} ${sourceHandle.y} C ${C1_X} ${C1_Y} ${C2_X} ${C2_Y} ${targetHandle.x} ${targetHandle.y}`;
-  }
+  };
 
 
 

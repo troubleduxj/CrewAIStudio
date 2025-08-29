@@ -10,7 +10,9 @@ import { executeTask } from '@/ai/flows/task-execution-flow';
 import type { ResearchInput } from '@/lib/types';
 import fs from 'fs/promises';
 import path from 'path';
-
+import { genkit, type GenkitError } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+// The openai and deepseek imports are removed as the packages are not available.
 
 export async function saveApiKey({
   provider,
@@ -84,6 +86,46 @@ export async function saveApiKey({
     console.error(`Error saving ${provider} API key:`, error);
     return { success: false, error: 'Failed to save API key.' };
   }
+}
+
+export async function testApiKey({
+    provider,
+    apiKey,
+    orgId,
+  }: {
+    provider: 'gemini' | 'openai' | 'deepseek';
+    apiKey: string;
+    orgId?: string;
+  }) {
+
+    let testAi;
+    try {
+        if (provider === 'gemini') {
+            testAi = genkit({ plugins: [googleAI({ apiKey })] });
+        } else if (provider === 'openai') {
+            // Cannot test OpenAI without the plugin
+            return { success: false, error: 'Testing for OpenAI is not supported at this time.' };
+        } else if (provider === 'deepseek') {
+            // Cannot test Deepseek without the plugin
+            return { success: false, error: 'Testing for Deepseek is not supported at this time.' };
+        } else {
+            return { success: false, error: 'Unsupported provider.' };
+        }
+    
+        // A simple operation to test the key, like listing models.
+        await testAi.listModels();
+        return { success: true, message: 'API key is valid and connection is successful.' };
+
+    } catch (e) {
+        const error = e as GenkitError;
+        let errorMessage = error.message || 'An unknown error occurred.';
+        if (error.cause) {
+            const cause = error.cause as any;
+            errorMessage = cause.message || errorMessage;
+        }
+        
+        return { success: false, error: `Connection failed: ${errorMessage}` };
+    }
 }
 
 export async function handleAdjustTaskParameters(
