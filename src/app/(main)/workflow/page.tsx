@@ -4,7 +4,7 @@
 import WorkflowVisualizer from '@/components/dashboard/workflow-visualizer';
 import WorkflowToolPanel from '@/components/workflow/workflow-tool-panel';
 import { useSidebar } from '@/components/ui/sidebar';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, Eye, Play, Rocket } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -29,16 +29,11 @@ const WorkflowContext = createContext<{
 export const useWorkflowContext = () => useContext(WorkflowContext);
 
 export default function WorkflowPage() {
-  const { setOpen } = useSidebar();
-  const [isToolboxOpen, setIsToolboxOpen] = useState(true);
+  const [isToolboxOpen, setIsToolboxOpen] = useState(false);
   const [viewMode, setViewMode] = useState('editor');
   const [events, setEvents] = useState<ExecutionEvent[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setOpen(false);
-  }, [setOpen]);
 
   const handleEvent = (event: ExecutionEvent) => {
     setEvents(prevEvents => [...prevEvents, event]);
