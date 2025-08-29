@@ -50,16 +50,16 @@ export default function MainLayout({
           <SidebarMenu>
             {menuItems.map(({ href, label, icon: Icon }) => (
               <SidebarMenuItem key={href}>
-                <Link href={href} passHref>
-                  <SidebarMenuButton
-                    as="a"
-                    isActive={pathname.startsWith(href)}
-                    tooltip={{ children: label }}
-                  >
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith(href)}
+                  tooltip={{ children: label }}
+                >
+                  <Link href={href}>
                     <Icon />
                     <span>{label}</span>
-                  </SidebarMenuButton>
-                </Link>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
