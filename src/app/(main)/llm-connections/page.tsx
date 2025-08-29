@@ -114,7 +114,7 @@ export default function LLMConnectionsPage() {
         result = await saveApiKey({ provider, apiKey: geminiApiKey });
     } else if (provider === 'openai') {
         result = await saveApiKey({ provider, apiKey: openAiApiKey, orgId: openAiOrgId });
-    } else {
+    } else if (provider === 'deepseek') {
         result = await saveApiKey({ provider, apiKey: deepseekApiKey });
     }
     
@@ -136,13 +136,13 @@ export default function LLMConnectionsPage() {
   
   const handleTest = (provider: 'gemini' | 'openai' | 'deepseek') => async () => {
     setIsTesting(true);
-    let apiKey, orgId;
+    let apiKey, orgId, host;
     if (provider === 'gemini') {
         apiKey = geminiApiKey;
     } else if (provider === 'openai') {
         apiKey = openAiApiKey;
         orgId = openAiOrgId;
-    } else {
+    } else if (provider === 'deepseek') {
         apiKey = deepseekApiKey;
     }
 
@@ -156,7 +156,7 @@ export default function LLMConnectionsPage() {
         return;
     }
 
-    const result = await testApiKey({ provider, apiKey, orgId });
+    const result = await testApiKey({ provider, apiKey, orgId, host });
 
     if (result.success) {
         toast({

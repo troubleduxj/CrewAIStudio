@@ -35,6 +35,7 @@ export async function getApiKeys() {
         openai: envConfig['OPENAI_API_KEY'] || '',
         openaiOrgId: envConfig['OPENAI_ORG_ID'] || '',
         deepseek: envConfig['DEEPSEEK_API_KEY'] || '',
+        ollama: envConfig['OLLAMA_HOST'] || '',
       },
     };
   } catch (error: any) {
@@ -42,7 +43,7 @@ export async function getApiKeys() {
       // .env.local file doesn't exist, return empty keys
       return {
         success: true,
-        keys: { gemini: '', openai: '', openaiOrgId: '', deepseek: '' },
+        keys: { gemini: '', openai: '', openaiOrgId: '', deepseek: '', ollama: '' },
       };
     }
     console.error('Error reading API keys:', error);
@@ -54,10 +55,12 @@ export async function saveApiKey({
   provider,
   apiKey,
   orgId,
+  host,
 }: {
-  provider: 'gemini' | 'openai' | 'deepseek';
-  apiKey: string;
+  provider: 'gemini' | 'openai' | 'deepseek' | 'ollama';
+  apiKey?: string;
   orgId?: string;
+  host?: string;
 }) {
   const envFileName = '.env.local';
   const envFilePath = path.join(process.cwd(), envFileName);
@@ -97,6 +100,9 @@ export async function saveApiKey({
     } else if (provider === 'deepseek') {
       if (apiKey) envConfig['DEEPSEEK_API_KEY'] = apiKey;
       else delete envConfig['DEEPSEEK_API_KEY'];
+    } else if (provider === 'ollama') {
+      if (host) envConfig['OLLAMA_HOST'] = host;
+      else delete envConfig['OLLAMA_HOST'];
     }
 
     const newEnvFileContent = Object.entries(envConfig)
@@ -116,11 +122,11 @@ export async function saveApiKey({
       success: true,
       message: `${
         provider.charAt(0).toUpperCase() + provider.slice(1)
-      } API Key saved successfully.`,
+      } configuration saved successfully.`,
     };
   } catch (error) {
     console.error(`Error saving ${provider} API key:`, error);
-    return { success: false, error: 'Failed to save API key.' };
+    return { success: false, error: 'Failed to save configuration.' };
   }
 }
 
@@ -128,10 +134,12 @@ export async function testApiKey({
     provider,
     apiKey,
     orgId,
+    host,
   }: {
-    provider: 'gemini' | 'openai' | 'deepseek';
-    apiKey: string;
+    provider: 'gemini' | 'openai' | 'deepseek' | 'ollama';
+    apiKey?: string;
     orgId?: string;
+    host?: string;
   }) {
 
     try {
@@ -161,6 +169,8 @@ export async function testApiKey({
                 const errorData = await response.json();
                 return { success: false, error: `Connection failed: ${errorData.error.message}` };
             }
+        } else if (provider === 'ollama') {
+            return { success: false, error: 'Ollama integration is not available at this time.' };
         } else {
             return { success: false, error: 'Unsupported provider.' };
         }
