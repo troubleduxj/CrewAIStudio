@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, Eye, Play } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
+import WorkflowExecutionEvents from '@/components/workflow/workflow-execution-events';
 
 export default function WorkflowPage() {
   const { setOpen } = useSidebar();
@@ -74,11 +74,7 @@ export default function WorkflowPage() {
           </div>
         </TabsContent>
         <TabsContent value="execution" className="h-full m-0 p-4">
-          <Card className="h-full w-full flex items-center justify-center">
-            <p className="text-muted-foreground">
-              Execution view to be implemented.
-            </p>
-          </Card>
+          <WorkflowExecutionEvents />
         </TabsContent>
       </div>
     </Tabs>
