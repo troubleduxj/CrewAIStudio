@@ -14,9 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GeminiLogo, OpenAIColorLogo, DeepseekLogo } from '@/components/ui/logos';
 import { BrainCircuit, CheckCircle, XCircle } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { saveApiKey, testApiKey } from '@/app/actions';
+import { saveApiKey, testApiKey, getApiKeys } from '@/app/actions';
 
 const ConnectionForm = ({
   children,
@@ -70,6 +70,24 @@ export default function LLMConnectionsPage() {
   const [openAiOrgId, setOpenAiOrgId] = useState('');
   const [deepseekApiKey, setDeepseekApiKey] = useState('');
 
+  useEffect(() => {
+    async function fetchKeys() {
+        const result = await getApiKeys();
+        if (result.success && result.keys) {
+            setGeminiApiKey(result.keys.gemini);
+            setOpenAiApiKey(result.keys.openai);
+            setOpenAiOrgId(result.keys.openaiOrgId);
+            setDeepseekApiKey(result.keys.deepseek);
+        } else {
+            toast({
+                title: "Error loading keys",
+                description: result.error,
+                variant: "destructive",
+            });
+        }
+    }
+    fetchKeys();
+  }, [toast]);
   
   const handleSubmit = (provider: 'gemini' | 'openai' | 'deepseek') => async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

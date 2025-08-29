@@ -13,6 +13,43 @@ import path from 'path';
 import { genkit, type GenkitError } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 
+export async function getApiKeys() {
+  const envFilePath = path.join(process.cwd(), '.env.local');
+  try {
+    const envFileContent = await fs.readFile(envFilePath, 'utf-8');
+    const envConfig: Record<string, string> = {};
+    envFileContent.split('\n').forEach(line => {
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#')) {
+        const [key, value] = trimmedLine.split(/=(.*)/s);
+        if (key) {
+          envConfig[key.trim()] = value?.trim() || '';
+        }
+      }
+    });
+
+    return {
+      success: true,
+      keys: {
+        gemini: envConfig['GOOGLE_GENAI_API_KEY'] || '',
+        openai: envConfig['OPENAI_API_KEY'] || '',
+        openaiOrgId: envConfig['OPENAI_ORG_ID'] || '',
+        deepseek: envConfig['DEEPSEEK_API_KEY'] || '',
+      },
+    };
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      // .env.local file doesn't exist, return empty keys
+      return {
+        success: true,
+        keys: { gemini: '', openai: '', openaiOrgId: '', deepseek: '' },
+      };
+    }
+    console.error('Error reading API keys:', error);
+    return { success: false, error: 'Failed to read API keys.' };
+  }
+}
+
 export async function saveApiKey({
   provider,
   apiKey,
