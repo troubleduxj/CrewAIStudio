@@ -12,13 +12,11 @@ import '@/ai/tools/calculator.ts';
 import '@/ai/tools/file-reader.ts';
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { deepseek } from 'genkitx-deepseek';
 
 genkit({
     plugins: [
         googleAI(),
-        deepseek({
-            apiKey: process.env.DEEPSEEK_API_KEY
-        })
-    ]
+    ],
+    logSinks: ['local'],
+    enableTracing: true
 })
