@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Task, TaskStatus } from '@/lib/types';
@@ -77,11 +78,18 @@ const statusConfig: Record<TaskStatus, { dot: string; text: string }> = {
 };
 
 export default function StatusMonitor() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [time, setTime] = useState(0);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [time, setTime] = useState(() => Date.now());
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setTime(Date.now());
+    setIsClient(true);
+    setTasks(initialTasks.map(t => ({
+      ...t,
+      startTime: t.startTime ? t.startTime - (initialTasks[0].startTime! - time) : undefined,
+      endTime: t.endTime ? t.endTime - (initialTasks[0].startTime! - time) : undefined,
+    })));
+
     const timer = setInterval(() => {
       setTime(Date.now());
       setTasks(currentTasks =>
@@ -111,6 +119,10 @@ export default function StatusMonitor() {
     const duration = Math.round((endTime - task.startTime) / 1000);
     return `${duration}s`;
   };
+
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40">
