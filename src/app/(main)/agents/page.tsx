@@ -1,7 +1,7 @@
 "use client";
 
-import type { Agent, Tool, Task } from '@/lib/types';
-import { Cog, Pencil, PlusCircle, Users, ListChecks } from 'lucide-react';
+import type { Agent, Tool } from '@/lib/types';
+import { Cog, Pencil, PlusCircle, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

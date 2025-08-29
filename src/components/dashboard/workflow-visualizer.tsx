@@ -332,7 +332,7 @@ export default function WorkflowVisualizer() {
 
   return (
     <>
-      <div className="h-full bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden shadow-none rounded-none border-0 border-r">
+      <div className="h-full overflow-hidden shadow-none rounded-none border-0 border-r">
         <CardContent className="p-0 h-full">
           <div
             ref={containerRef}
@@ -462,7 +462,7 @@ export default function WorkflowVisualizer() {
                         <p className="text-xs text-muted-foreground mt-1 truncate">{(node.data as Task).instructions}</p>
                         <Handle id={`${node.id}-top`} position="-top-1.5 left-1/2 -translate-x-1/2" />
                         <Handle id={`${node.id}-left`} position="-left-1.5 top-1/2 -translate-y-1/2" />
-                        <Handle id={`${node.id}-right`} position="-right-1.5 top-1/2 -translate-y-1/2" />
+                        <Handle id={`${node.id}-right`} position="-right-1.5 top-1/2 -translate-y-1_2" />
                     </>
                 )}
               </div>

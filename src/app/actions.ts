@@ -6,10 +6,9 @@ import {
 } from '@/ai/flows/adjust-task-parameters';
 import {
   research,
-  type ResearchInput,
 } from '@/ai/flows/research-analyst';
+import type { Crew, ResearchInput } from '@/lib/types';
 
-import type { Crew } from '@/lib/types';
 
 export async function handleAdjustTaskParameters(
   input: AdjustTaskParametersInput,
