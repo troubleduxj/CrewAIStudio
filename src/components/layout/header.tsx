@@ -1,9 +1,11 @@
 import { Bot } from 'lucide-react';
+import { SidebarTrigger } from '../ui/sidebar';
 
 export default function Header() {
   return (
-    <header className="flex items-center justify-between p-4 border-b border-border/40 bg-card/20 backdrop-blur-lg sticky top-0 z-50">
+    <header className="flex items-center justify-between p-4 h-14 border-b border-border/40 bg-card/20 backdrop-blur-lg sticky top-0 z-50">
       <div className="flex items-center gap-3">
+        <SidebarTrigger className="md:hidden" />
         <Bot
           className="w-8 h-8 text-primary"
           style={{ filter: 'drop-shadow(0 0 5px hsl(var(--primary)))' }}
