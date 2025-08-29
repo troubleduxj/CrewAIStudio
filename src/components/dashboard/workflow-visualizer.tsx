@@ -287,7 +287,7 @@ export default function WorkflowVisualizer() {
 
   return (
     <>
-      <Card className="h-full min-h-[700px] bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden">
+      <Card className="h-full bg-card/60 backdrop-blur-sm border-border/40 overflow-hidden shadow-none rounded-none border-0 border-r">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Network
@@ -302,10 +302,10 @@ export default function WorkflowVisualizer() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div
             ref={containerRef}
-            className="relative w-full h-[600px] bg-background/50 rounded-lg border border-border/40 overflow-hidden"
+            className="relative w-full h-[calc(100vh-theme(spacing.14)-theme(spacing.24))] bg-background/50 overflow-hidden"
             onClick={() => setSelectedNodeId(null)}
           >
             <svg className="absolute w-full h-full" pointerEvents="none">
