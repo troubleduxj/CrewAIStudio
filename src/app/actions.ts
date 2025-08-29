@@ -97,27 +97,40 @@ export async function testApiKey({
     orgId?: string;
   }) {
 
-    let testAi;
     try {
         if (provider === 'gemini') {
-            testAi = genkit({ plugins: [googleAI({ apiKey })] });
+            const testAi = genkit({ plugins: [googleAI({ apiKey })] });
+            await testAi.listModels();
+            return { success: true, message: 'API key is valid and connection is successful.' };
         } else if (provider === 'openai') {
-            // Cannot test OpenAI without the plugin
             return { success: false, error: 'Testing for OpenAI is not supported at this time.' };
         } else if (provider === 'deepseek') {
-            return { success: false, error: 'Testing for Deepseek is not supported at this time.' };
+             const response = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [{ role: 'user', content: 'test' }],
+                    max_tokens: 1,
+                }),
+            });
+
+            if (response.ok) {
+                 return { success: true, message: 'API key is valid and connection is successful.' };
+            } else {
+                const errorData = await response.json();
+                return { success: false, error: `Connection failed: ${errorData.error.message}` };
+            }
         } else {
             return { success: false, error: 'Unsupported provider.' };
         }
-    
-        // A simple operation to test the key, like listing models.
-        await testAi.listModels();
-        return { success: true, message: 'API key is valid and connection is successful.' };
-
     } catch (e) {
-        const error = e as GenkitError;
+        const error = e as GenkitError | Error;
         let errorMessage = error.message || 'An unknown error occurred.';
-        if (error.cause) {
+        if ('cause' in error && error.cause) {
             const cause = error.cause as any;
             errorMessage = cause.message || errorMessage;
         }
