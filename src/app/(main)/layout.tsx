@@ -46,7 +46,7 @@ export default function MainLayout({
   const pathname = usePathname();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <Sidebar side="left" collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
