@@ -19,20 +19,22 @@ export default function WorkflowPage() {
   }, [setOpen]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.14))]">
+    <Tabs
+      value={viewMode}
+      onValueChange={setViewMode}
+      className="flex flex-col h-[calc(100vh-theme(spacing.14))]"
+    >
       <header className="flex-shrink-0 p-4 border-b border-border/40">
-        <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-sm mx-auto">
-            <TabsTrigger value="editor">
-              <Eye className="mr-2" />
-              Visual Editor
-            </TabsTrigger>
-            <TabsTrigger value="execution">
-              <Play className="mr-2" />
-              Execution
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <TabsList className="grid w-full grid-cols-2 max-w-sm mx-auto">
+          <TabsTrigger value="editor">
+            <Eye className="mr-2" />
+            Visual Editor
+          </TabsTrigger>
+          <TabsTrigger value="execution">
+            <Play className="mr-2" />
+            Execution
+          </TabsTrigger>
+        </TabsList>
       </header>
       <div className="flex-1 overflow-hidden">
         <TabsContent value="editor" className="h-full m-0">
@@ -49,7 +51,9 @@ export default function WorkflowPage() {
               <button
                 onClick={() => setIsToolboxOpen(!isToolboxOpen)}
                 className="absolute z-10 top-1/2 -left-[15px] -translate-y-1/2 w-8 h-16 rounded-l-md bg-card border border-r-0 border-border/40 flex items-center justify-center hover:bg-muted"
-                aria-label={isToolboxOpen ? 'Collapse toolbox' : 'Expand toolbox'}
+                aria-label={
+                  isToolboxOpen ? 'Collapse toolbox' : 'Expand toolbox'
+                }
               >
                 <ChevronLeft
                   className={cn(
@@ -70,11 +74,13 @@ export default function WorkflowPage() {
           </div>
         </TabsContent>
         <TabsContent value="execution" className="h-full m-0 p-4">
-           <Card className="h-full w-full flex items-center justify-center">
-              <p className="text-muted-foreground">Execution view to be implemented.</p>
-           </Card>
+          <Card className="h-full w-full flex items-center justify-center">
+            <p className="text-muted-foreground">
+              Execution view to be implemented.
+            </p>
+          </Card>
         </TabsContent>
       </div>
-    </div>
+    </Tabs>
   );
 }
