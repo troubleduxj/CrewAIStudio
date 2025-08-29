@@ -206,8 +206,6 @@ export default function WorkflowVisualizer() {
     const node = getNode(nodeId);
     if (!node) return;
 
-    handleNodeClick(nodeId);
-
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (!containerRect) return;
 
