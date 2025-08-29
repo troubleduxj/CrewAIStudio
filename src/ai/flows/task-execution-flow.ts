@@ -43,7 +43,6 @@ Execute the task based on your configuration and the provided instructions. Prov
 `;
 
     const { output } = await ai.generate({
-      model: agent.llm as ModelReference,
       prompt: prompt,
     });
     
