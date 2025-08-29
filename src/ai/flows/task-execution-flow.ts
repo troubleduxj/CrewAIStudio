@@ -15,6 +15,7 @@ import {
   TaskExecutionOutput,
   TaskExecutionOutputSchema,
 } from '@/lib/types';
+import { ModelReference } from 'genkit/model';
 
 export async function executeTask(
   input: TaskExecutionInput
@@ -22,31 +23,36 @@ export async function executeTask(
   return taskExecutionFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'taskExecutionPrompt',
-  input: { schema: TaskExecutionInputSchema },
-  output: { schema: TaskExecutionOutputSchema },
-  prompt: `You are an AI agent. Here is your configuration:
-Role: {{{agent.role}}}
-Goal: {{{agent.goal}}}
-Backstory: {{{agent.backstory}}}
-
-You have been assigned a task. Here are the details:
-Task Name: {{{task.name}}}
-Instructions: {{{task.instructions}}}
-
-Execute the task based on your configuration and the provided instructions. Provide only the final output or result of the task.
-`,
-});
-
 const taskExecutionFlow = ai.defineFlow(
   {
     name: 'taskExecutionFlow',
     inputSchema: TaskExecutionInputSchema,
     outputSchema: TaskExecutionOutputSchema,
   },
-  async input => {
-    const { output } = await prompt(input);
-    return output!;
+  async ({ agent, task }) => {
+    const prompt = ai.definePrompt({
+      name: 'taskExecutionPrompt',
+      prompt: `You are an AI agent. Here is your configuration:
+Role: ${agent.role}
+Goal: ${agent.goal}
+Backstory: ${agent.backstory}
+
+You have been assigned a task. Here are the details:
+Task Name: ${task.name}
+Instructions: ${task.instructions}
+
+Execute the task based on your configuration and the provided instructions. Provide only the final output or result of the task.
+`,
+    });
+
+    const { output } = await ai.generate({
+      model: agent.llm as ModelReference,
+      prompt: (await prompt()).prompt,
+    });
+    
+    // Assuming the output is a string. If it's structured, you might need to adjust.
+    const resultText = output as string;
+
+    return { output: resultText };
   }
 );

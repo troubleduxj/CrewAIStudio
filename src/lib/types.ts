@@ -23,6 +23,7 @@ export interface Agent {
   goal: string;
   backstory: string;
   tools: Tool[];
+  llm: string;
 }
 
 export type NodeType = 'agent' | 'task';
@@ -64,6 +65,7 @@ export const AgentSchema = z.object({
   goal: z.string(),
   backstory: z.string(),
   tools: z.array(z.custom<Tool>()),
+  llm: z.string(),
 });
 
 export const TaskSchema = z.object({

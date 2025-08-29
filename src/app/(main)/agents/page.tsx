@@ -31,6 +31,7 @@ const mockAgents: Agent[] = [
     goal: 'Analyze sales data to find key performance indicators',
     backstory: 'An expert in data analysis and visualization, with a knack for finding hidden patterns in large datasets.',
     tools: ['file_reader', 'calculator'],
+    llm: 'deepseek-chat',
   },
   {
     id: 'agent-2',
@@ -38,6 +39,7 @@ const mockAgents: Agent[] = [
     goal: 'Find market trends and competitor strategies',
     backstory: 'A skilled operative in the digital world, capable of sifting through vast amounts of web data to find actionable intelligence.',
     tools: ['browser'],
+    llm: 'deepseek-chat',
   },
 ];
 
@@ -126,6 +128,7 @@ export default function AgentsPage() {
       goal: formData.get('goal') as string,
       backstory: formData.get('backstory') as string,
       tools: formData.getAll('tools') as Tool[],
+      llm: 'deepseek-chat',
     };
 
     const newAgent: Agent = {

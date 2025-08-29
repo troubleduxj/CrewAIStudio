@@ -21,6 +21,7 @@ export const initialAgents: Agent[] = [
     goal: 'Identify the latest trends and technologies in AI Agents by conducting thorough web research and analysis.',
     backstory: 'An expert in AI, with a knack for identifying emerging patterns and technologies in the field.',
     tools: ['browser'],
+    llm: 'deepseek-chat',
   },
   {
     id: 'agent-2',
@@ -28,6 +29,7 @@ export const initialAgents: Agent[] = [
     goal: 'Develop a compelling content strategy based on the research findings to attract a tech-savvy audience.',
     backstory: 'A creative strategist who translates complex technical information into engaging and accessible content.',
     tools: [],
+    llm: 'deepseek-chat',
   },
 ];
 
@@ -280,29 +282,51 @@ export default function WorkflowVisualizer() {
 
   const getPath = (sourceNode: Node, targetNode: Node) => {
     if (!sourceNode || !targetNode) return '';
-  
-    const isSourceAgent = sourceNode.type === 'agent';
+
     const sourceNodeWidth = 288; // w-72
-    const taskNodeHeight = 76; // Approximation of task node height
+    const taskNodeHeight = 76;   // Approximation of task node height
     const agentNodeHeight = 228; // Approximation of agent node height
 
+    const isSourceAgent = sourceNode.type === 'agent';
+    const isTargetTask = targetNode.type === 'task';
+
     const sourceHandle = {
-        x: sourceNode.position.x + (isSourceAgent ? 0 : sourceNodeWidth / 2), 
-        y: sourceNode.position.y + (isSourceAgent ? agentNodeHeight / 2 : 0),
-    }
+        x: sourceNode.position.x + sourceNodeWidth / 2,
+        y: sourceNode.position.y + (isSourceAgent ? agentNodeHeight / 2 : taskNodeHeight / 2),
+    };
 
     const targetHandle = {
-        x: targetNode.position.x - (isSourceAgent ? 0 : sourceNodeWidth / 2),
-        y: targetNode.position.y - (isSourceAgent ? taskNodeHeight / 2 : 0)
-    }
-   
-    const C1_X = sourceHandle.x;
-    const C1_Y = sourceHandle.y + 80;
-    const C2_X = targetHandle.x;
-    const C2_Y = targetHandle.y - 80;
+        x: targetNode.position.x - sourceNodeWidth / 2,
+        y: targetNode.position.y - taskNodeHeight / 2,
+    };
     
+    // If connecting Agent to Task, target the top handle of the task
+    if (isSourceAgent && isTargetTask) {
+        targetHandle.x = targetNode.position.x;
+        targetHandle.y = targetNode.position.y - taskNodeHeight / 2;
+    } else { // For Task-to-Task, connect side-to-side
+        sourceHandle.x = sourceNode.position.x + sourceNodeWidth / 2;
+        sourceHandle.y = sourceNode.position.y;
+        targetHandle.x = targetNode.position.x - sourceNodeWidth / 2;
+        targetHandle.y = targetNode.position.y;
+    }
+
+    const C1_X = sourceHandle.x + 50;
+    const C1_Y = sourceHandle.y;
+    const C2_X = targetHandle.x - 50;
+    const C2_Y = targetHandle.y;
+    
+    if (isSourceAgent && isTargetTask) {
+        const C1_X = sourceHandle.x;
+        const C1_Y = sourceHandle.y + 80;
+        const C2_X = targetHandle.x;
+        const C2_Y = targetHandle.y - 80;
+        return `M ${sourceHandle.x} ${sourceHandle.y} C ${C1_X} ${C1_Y} ${C2_X} ${C2_Y} ${targetHandle.x} ${targetHandle.y}`;
+    }
+
     return `M ${sourceHandle.x} ${sourceHandle.y} C ${C1_X} ${C1_Y} ${C2_X} ${C2_Y} ${targetHandle.x} ${targetHandle.y}`;
   }
+
 
 
   const handleDragOver = (e: DragEvent) => {
@@ -416,12 +440,12 @@ export default function WorkflowVisualizer() {
                          <BrainCircuit className="w-4 h-4 text-muted-foreground" />
                          <span className="text-muted-foreground">LLM</span>
                        </div>
-                       <Select defaultValue="deepseek-chat">
+                       <Select defaultValue={(node.data as Agent).llm || 'deepseek-chat'}>
                          <SelectTrigger className='h-8 text-xs'>
                            <SelectValue placeholder="Select LLM" />
                          </SelectTrigger>
                          <SelectContent>
-                           <SelectItem value="gemini-2.5-flash">gemini-2.5-flash</SelectItem>
+                           <SelectItem value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</SelectItem>
                            <SelectItem value="gpt-4o">gpt-4o</SelectItem>
                            <SelectItem value="deepseek-chat">deepseek-chat</SelectItem>
                          </SelectContent>
