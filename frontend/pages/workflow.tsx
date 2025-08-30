@@ -491,16 +491,13 @@ function WorkflowEditor() {
               />
               
               {/* 画布状态指示器 */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                <Badge variant="outline" className="bg-background/80">
-                  节点数: {nodes.length}
-                </Badge>
-                {isDragging && (
+              {isDragging && (
+                <div className="absolute top-4 left-4">
                   <Badge variant="default" className="bg-primary/80">
                     拖拽中...
                   </Badge>
-                )}
-              </div>
+                </div>
+              )}
               
               {/* 空状态提示 */}
               {nodes.length === 0 && !isDragging && (

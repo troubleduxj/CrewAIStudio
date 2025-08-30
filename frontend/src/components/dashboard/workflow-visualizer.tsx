@@ -7,7 +7,7 @@ import {
 import WorkflowNodeEditor from '@/components/workflow/workflow-node-editor';
 import { cn } from '@/lib/utils';
 import type { Agent, Task, Tool, Node } from '@/lib/types';
-import { Cog, ListChecks, User, BrainCircuit, GripVertical, Trash2, Pencil, Check, X } from 'lucide-react';
+import { Cog, ListChecks, User, BrainCircuit, GripVertical, Trash2, Pencil, Check, X, ZoomIn, ZoomOut, RotateCcw, Lock, Unlock } from 'lucide-react';
 import React, { useState, useRef, MouseEvent, useEffect, DragEvent } from 'react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -233,7 +233,12 @@ export default function WorkflowVisualizer({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggingNode, setDraggingNode] = useState<string | null>(null);
   const [pendingDeleteNodeId, setPendingDeleteNodeId] = useState<string | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isLocked, setIsLocked] = useState(false);
+  const [canvasOffset, setCanvasOffset] = useState<Vector2>({ x: 0, y: 0 });
+  const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
   const dragOffset = useRef<Vector2>({ x: 0, y: 0 });
+  const canvasDragOffset = useRef<Vector2>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const wasDragged = useRef(false);
@@ -264,8 +269,16 @@ export default function WorkflowVisualizer({
 
   const selectedNode = selectedNodeId ? getNode(selectedNodeId) : null;
 
+  /**
+   * 处理节点点击事件
+   * @param nodeId 节点ID
+   */
   const handleNodeClick = (nodeId: string) => {
     if (wasDragged.current) {
+        return;
+    }
+    // 如果画布被锁定，禁止选中节点
+    if (isLocked) {
         return;
     }
     const node = getNode(nodeId);
@@ -352,10 +365,76 @@ export default function WorkflowVisualizer({
     setIsEditorOpen(true);
   }
 
+  /**
+   * 缩放控制函数
+   */
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.1, 2));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+  };
+
+  const handleZoomReset = () => {
+    setZoomLevel(1);
+  };
+
+  const handleToggleLock = () => {
+    setIsLocked(prev => !prev);
+  };
+
+  /**
+   * 处理画布拖动开始
+   * @param e 鼠标事件
+   */
+  const handleCanvasMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    
+    // 排除节点卡片、按钮和输入元素
+    if (target.closest('.node-card') || 
+        target.closest('button') || 
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' ||
+        target.closest('[data-radix-select-trigger]')) {
+      return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsDraggingCanvas(true);
+    canvasDragOffset.current = {
+      x: e.clientX - canvasOffset.x,
+      y: e.clientY - canvasOffset.y,
+    };
+
+    const handleCanvasMouseMove = (me: globalThis.MouseEvent) => {
+      const newX = me.clientX - canvasDragOffset.current.x;
+      const newY = me.clientY - canvasDragOffset.current.y;
+      
+      setCanvasOffset({ x: newX, y: newY });
+    };
+
+    const handleCanvasMouseUp = () => {
+      setIsDraggingCanvas(false);
+      document.removeEventListener('mousemove', handleCanvasMouseMove);
+      document.removeEventListener('mouseup', handleCanvasMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleCanvasMouseMove);
+    document.addEventListener('mouseup', handleCanvasMouseUp);
+  };
+
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>, nodeId: string) => {
     // Prevent drag from starting on input elements
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).closest('[data-radix-select-trigger]')) {
         return;
+    }
+    
+    // 如果画布被锁定，阻止拖拽
+    if (isLocked) {
+      return;
     }
     
     e.preventDefault();
@@ -529,9 +608,56 @@ export default function WorkflowVisualizer({
         <CardContent className="p-0 h-full">
           <div
             ref={containerRef}
-            className="relative w-full h-full min-h-[calc(100vh-8rem)] bg-background/50 overflow-auto"
+            className={cn(
+              "relative w-full h-full min-h-[calc(100vh-8rem)] bg-background/50 overflow-hidden",
+              isDraggingCanvas ? "cursor-grabbing" : "cursor-grab"
+            )}
+            style={{
+              backgroundImage: `radial-gradient(circle, rgba(var(--border) / 0.3) 1px, transparent 1px)`,
+              backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`,
+              backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`
+            }}
             onClick={() => setSelectedNodeId(null)}
+            onMouseDown={handleCanvasMouseDown}
           >
+            {/* 悬浮控制按钮 */}
+            <div className="absolute bottom-4 left-4 z-30 flex flex-col gap-2">
+              <div className="bg-background/90 backdrop-blur-sm border rounded-lg shadow-lg p-2 flex flex-col gap-1">
+                <button
+                  onClick={handleZoomIn}
+                  className="p-2 rounded-md hover:bg-accent transition-colors"
+                  title="放大"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleZoomOut}
+                  className="p-2 rounded-md hover:bg-accent transition-colors"
+                  title="缩小"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleZoomReset}
+                  className="p-2 rounded-md hover:bg-accent transition-colors"
+                  title="重置缩放"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="bg-background/90 backdrop-blur-sm border rounded-lg shadow-lg p-2">
+                <button
+                  onClick={handleToggleLock}
+                  className={cn(
+                    "p-2 rounded-md transition-colors",
+                    isLocked ? "bg-destructive text-destructive-foreground" : "hover:bg-accent"
+                  )}
+                  title={isLocked ? "解锁拖拽" : "锁定拖拽"}
+                >
+                  {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
             <svg className="absolute w-full h-full" pointerEvents="none">
               <defs>
                 <marker
@@ -545,33 +671,44 @@ export default function WorkflowVisualizer({
                     <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--primary))" />
                 </marker>
               </defs>
-              {connections.map(({source, target}, index) => {
-                const sourceNode = getNode(source);
-                const targetNode = getNode(target);
-                if (!sourceNode || !targetNode) return null;
-                const path = getPath(sourceNode, targetNode);
-                return (
-                    <path key={`${source}-${target}-${index}`} d={path} stroke="hsl(var(--primary))" strokeWidth="2" fill="none" markerEnd='url(#arrowhead)' />
-                )
-              })}
+              <g transform={`translate(${canvasOffset.x}, ${canvasOffset.y}) scale(${zoomLevel})`}>
+                {connections.map(({source, target}, index) => {
+                  const sourceNode = getNode(source);
+                  const targetNode = getNode(target);
+                  if (!sourceNode || !targetNode) return null;
+                  const path = getPath(sourceNode, targetNode);
+                  return (
+                      <path key={`${source}-${target}-${index}`} d={path} stroke="hsl(var(--primary))" strokeWidth="2" fill="none" markerEnd='url(#arrowhead)' />
+                  )
+                })}
+              </g>
             </svg>
-            {nodes.map(node => (
-              <div
-                key={node.id}
-                onMouseDown={(e) => handleMouseDown(e, node.id)}
-                onClick={(e) => { e.stopPropagation(); handleNodeClick(node.id); }}
-                className={cn(
-                  'absolute p-4 rounded-lg shadow-lg transition-all duration-300 border-2 bg-card cursor-grab hover:shadow-2xl hover:scale-110 hover:border-primary/50 hover:bg-card/90 hover:-translate-y-2',
-                  selectedNodeId === node.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-primary' : 'border-border/60',
-                  draggingNode === node.id && 'cursor-grabbing shadow-2xl scale-105 z-10',
-                  node.type === 'agent' ? 'w-72' : 'w-72',
-                  isToolDragging && node.type === 'agent' && 'scale-110 shadow-2xl -translate-y-2'
-                )}
-                style={{
-                  left: node.position.x,
-                  top: node.position.y,
-                  transform: 'translate(-50%, -50%)',
-                }}
+            <div 
+              style={{
+                transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${zoomLevel})`,
+                transformOrigin: 'top left',
+                width: `${100 / zoomLevel}%`,
+                height: `${100 / zoomLevel}%`
+              }}
+            >
+              {nodes.map(node => (
+                <div
+                  key={node.id}
+                  onMouseDown={(e) => handleMouseDown(e, node.id)}
+                  onClick={(e) => { e.stopPropagation(); handleNodeClick(node.id); }}
+                  className={cn(
+                    'absolute p-4 rounded-lg shadow-lg transition-all duration-300 border-2 bg-card hover:shadow-2xl hover:border-primary/50 hover:bg-card/90 hover:-translate-y-2',
+                    selectedNodeId === node.id ? 'border-primary' : 'border-border/60',
+                    draggingNode === node.id && 'cursor-grabbing shadow-2xl scale-105 z-10',
+                    node.type === 'agent' ? 'w-72' : 'w-72',
+                    isToolDragging && node.type === 'agent' && 'scale-110 shadow-2xl -translate-y-2',
+                    isLocked ? 'cursor-not-allowed' : 'cursor-grab'
+                  )}
+                  style={{
+                    left: node.position.x,
+                    top: node.position.y,
+                    transform: 'translate(-50%, -50%)',
+                  }}
               >
                 {selectedNodeId === node.id && (
                   <div className="absolute -top-3 -right-3 z-20 flex gap-1">
@@ -603,29 +740,31 @@ export default function WorkflowVisualizer({
                   </div>
                 )}
                 
-                <button 
-                  onClick={(e) => handleEditClick(e, node.id)}
-                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 bg-secondary text-secondary-foreground rounded-full p-1.5 hover:bg-primary hover:text-primary-foreground transition-colors shadow-md"
-                  aria-label="Edit Node"
-                >
-                    <Pencil className="w-4 h-4" />
-                </button>
+                {selectedNodeId === node.id && (
+                  <button 
+                    onClick={(e) => handleEditClick(e, node.id)}
+                    className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 bg-secondary text-secondary-foreground rounded-full p-1.5 hover:bg-primary hover:text-primary-foreground transition-colors shadow-md"
+                    aria-label="Edit Node"
+                  >
+                      <Pencil className="w-4 h-4" />
+                  </button>
+                )}
 
 
                 {node.type === 'agent' && 'data' in node && (
                   <div className='space-y-3'>
                     <div className="flex items-center gap-3">
                       <User className="w-5 h-5 text-primary" />
-                      <div className="font-bold text-primary flex-1 truncate">{(node.data as Agent).role}</div>
+                      <div className="font-semibold text-sm text-primary flex-1 truncate">{(node.data as Agent).role}</div>
                       <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
                     </div>
                     
                     <div className="space-y-2">
-                       <div className='flex items-center gap-2 text-sm'>
+                       <div className='flex items-center gap-2 text-xs'>
                          <BrainCircuit className="w-4 h-4 text-muted-foreground" />
                          <span className="text-muted-foreground">LLM</span>
                        </div>
-                       <Select defaultValue={(node.data as Agent).llm || 'deepseek-chat'}>
+                       <Select defaultValue={(node.data as Agent).llm || 'deepseek-chat'} disabled={isLocked}>
                          <SelectTrigger className='h-8 text-xs'>
                            <SelectValue placeholder="Select LLM" />
                          </SelectTrigger>
@@ -638,7 +777,7 @@ export default function WorkflowVisualizer({
                      </div>
 
                      <div className="space-y-2">
-                       <div className='flex items-center gap-2 text-sm'>
+                       <div className='flex items-center gap-2 text-xs'>
                          <Cog className="w-4 h-4 text-muted-foreground" />
                          <span className="text-muted-foreground">Tools</span>
                        </div>
@@ -646,7 +785,7 @@ export default function WorkflowVisualizer({
                          {(node.data as Agent).tools && (node.data as Agent).tools.length > 0 ? (
                            <div 
                              className={cn(
-                               "mt-2 p-2 min-h-[72px] rounded-md border-2 flex flex-wrap gap-2 items-center justify-start bg-background/50 transition-all",
+                               "mt-2 p-2 min-h-[64px] rounded-md border-2 flex flex-wrap gap-2 items-center justify-start bg-background/50 transition-all",
                                isToolDragging ? "border-dashed border-blue-500 animate-pulse" : "border-solid border-border/50"
                              )}
                              onDragOver={handleDragOver} 
@@ -655,8 +794,11 @@ export default function WorkflowVisualizer({
                              {(node.data as Agent).tools.map(tool => (
                                <div 
                                  key={tool} 
-                                 className="p-2 rounded-md bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer"
-                                 title={tool}
+                                 className={cn(
+                                   "p-2 rounded-md bg-secondary transition-colors",
+                                   isLocked ? "cursor-default" : "hover:bg-secondary/80 cursor-pointer"
+                                 )}
+                                 title={isLocked ? undefined : tool}
                                >
                                  {toolIcons[tool]}
                                </div>
@@ -665,7 +807,7 @@ export default function WorkflowVisualizer({
                          ) : (
                            <div 
                              className={cn(
-                               'mt-2 h-16 rounded-md border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground bg-background/50 transition-all',
+                               'mt-2 h-14 rounded-md border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground bg-background/50 transition-all',
                                isToolDragging ? 'border-blue-500 animate-pulse' : 'border-border/50'
                              )}
                              onDragOver={handleDragOver} 
@@ -683,10 +825,10 @@ export default function WorkflowVisualizer({
                     <>
                         <div className="flex items-center gap-3">
                             <ListChecks className="w-5 h-5 text-primary" />
-                            <div className="font-bold text-primary flex-1 truncate">{(node.data as Task).name}</div>
+                            <div className="font-semibold text-sm text-primary flex-1 truncate">{(node.data as Task).name}</div>
                             <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 truncate">{(node.data as Task).instructions}</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed h-14 overflow-hidden">{(node.data as Task).instructions}</p>
                         <Handle id={`${node.id}-top`} position="-top-1.5 left-1/2 -translate-x-1/2" />
                         <Handle id={`${node.id}-left`} position="-left-1.5 top-1/2 -translate-y-1/2" />
                         <Handle id={`${node.id}-right`} position="right-[-7px] top-1/2 -translate-y-1/2" />
@@ -694,6 +836,7 @@ export default function WorkflowVisualizer({
                 )}
               </div>
             ))}
+            </div>
           </div>
         </CardContent>
       </div>

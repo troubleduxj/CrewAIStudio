@@ -1,5 +1,4 @@
-import { Bot, Moon, Sun, Globe } from 'lucide-react';
-import { SidebarTrigger } from '../ui/sidebar';
+import { Moon, Sun, Globe } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import { Button } from '../ui/button';
 import { useRouter } from 'next/router';
@@ -25,15 +24,7 @@ export default function Header() {
     router.push(router.pathname, router.asPath, { locale });
   };
   return (
-    <header className="flex items-center justify-between p-4 h-14 border-b border-border/40 bg-card/20 backdrop-blur-lg sticky top-0 z-50">
-      <div className="flex items-center gap-3">
-        <SidebarTrigger className="md:hidden" />
-        <Bot
-          className="w-8 h-8 text-primary"
-          style={{ filter: 'drop-shadow(0 0 5px hsl(var(--primary)))' }}
-        />
-        <h1 className="text-2xl font-bold text-foreground">CrewView</h1>
-      </div>
+    <div className="flex items-center justify-end w-full">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="relative flex h-3 w-3">
@@ -74,6 +65,6 @@ export default function Header() {
           </Button>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

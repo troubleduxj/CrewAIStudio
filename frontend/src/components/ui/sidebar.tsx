@@ -250,9 +250,7 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
-            <div className="flex items-center justify-end p-2">
-              <SidebarTrigger />
-            </div>
+            {/* SidebarTrigger已移动到header，此处移除 */}
             {children}
           </div>
         </div>

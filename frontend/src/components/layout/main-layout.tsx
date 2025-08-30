@@ -129,7 +129,12 @@ export default function MainLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <Header />
+        <div className="flex items-center gap-3 p-4 h-14 border-b border-border/40 bg-card/20 backdrop-blur-lg sticky top-0 z-50">
+          <SidebarTrigger />
+          <div className="flex-1">
+            <Header />
+          </div>
+        </div>
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
