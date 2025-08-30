@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "dashboard": "仪表板",
+    "workflow": "工作流",
+    "agents": "智能体",
+    "tasks": "任务",
+    "tools": "工具",
+    "llmConnections": "LLM 连接"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "edit": "编辑",
+    "delete": "删除",
+    "add": "添加",
+    "create": "创建",
+    "update": "更新",
+    "loading": "加载中...",
+    "success": "成功",
+    "error": "错误",
+    "confirm": "确认",
+    "close": "关闭"
+  },
+  "dashboard": {
+    "title": "CrewAI 工作室",
+    "subtitle": "构建和管理您的AI智能体团队",
+    "quickActions": "快速操作",
+    "recentWorkflows": "最近的工作流",
+    "statistics": "统计信息"
+  },
+  "workflow": {
+    "title": "工作流管理",
+    "description": "设计和执行您的AI工作流",
+    "createWorkflow": "创建新工作流",
+    "executeWorkflow": "执行工作流",
+    "workflowName": "工作流名称",
+    "workflowDescription": "工作流描述"
+  },
+  "agents": {
+    "title": "智能体管理",
+    "description": "配置和管理您的AI智能体",
+    "createAgent": "创建新智能体",
+    "agentName": "智能体名称",
+    "agentRole": "智能体角色",
+    "agentGoal": "智能体目标",
+    "agentBackstory": "智能体背景故事",
+    "llmModel": "LLM 模型"
+  },
+  "tasks": {
+    "title": "任务管理",
+    "description": "定义和组织您的工作流任务",
+    "createTask": "创建新任务",
+    "taskName": "任务名称",
+    "taskDescription": "任务描述",
+    "assignedAgent": "分配的智能体",
+    "taskInstructions": "任务指令",
+    "dependencies": "依赖关系"
+  },
+  "tools": {
+    "title": "工具管理",
+    "description": "管理智能体可用的工具",
+    "createTool": "创建新工具",
+    "toolName": "工具名称",
+    "toolDescription": "工具描述",
+    "toolType": "工具类型"
+  },
+  "llmConnections": {
+    "title": "LLM 连接",
+    "description": "管理和配置您与各种大语言模型的连接",
+    "testConnection": "测试连接",
+    "saveConfiguration": "保存配置",
+    "apiKey": "API 密钥",
+    "organizationId": "组织 ID",
+    "hostUrl": "主机 URL",
+    "connectionSuccessful": "连接成功",
+    "connectionFailed": "连接失败",
+    "apiKeyMissing": "API 密钥缺失",
+    "hostMissing": "主机缺失",
+    "gemini": {
+      "title": "Google Gemini 配置",
+      "description": "输入您的 Google AI Studio API 密钥以连接到 Gemini 模型"
+    },
+    "openai": {
+      "title": "OpenAI 配置",
+      "description": "配置您与 OpenAI 模型（如 GPT-4、GPT-3.5 等）的连接",
+      "orgIdOptional": "组织 ID（可选）"
+    },
+    "deepseek": {
+      "title": "Deepseek 配置",
+      "description": "提供您的 API 密钥以连接到 Deepseek 模型"
+    },
+    "ollama": {
+      "title": "Ollama 配置",
+      "description": "配置您与本地 Ollama 实例的连接"
+    },
+    "anthropic": {
+      "title": "Anthropic 配置",
+      "description": "输入您的 Anthropic API 密钥以连接到 Claude 模型"
+    }
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "系统"
+  },
+  "language": {
+    "english": "English",
+    "chinese": "中文"
+  }
+}

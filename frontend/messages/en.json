@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "workflow": "Workflow",
+    "agents": "Agents",
+    "tasks": "Tasks",
+    "tools": "Tools",
+    "llmConnections": "LLM Connections"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "dashboard": {
+    "title": "CrewAI Studio",
+    "subtitle": "Build and manage your AI agent crews",
+    "quickActions": "Quick Actions",
+    "recentWorkflows": "Recent Workflows",
+    "statistics": "Statistics"
+  },
+  "workflow": {
+    "title": "Workflow Management",
+    "description": "Design and execute your AI workflows",
+    "createWorkflow": "Create New Workflow",
+    "executeWorkflow": "Execute Workflow",
+    "workflowName": "Workflow Name",
+    "workflowDescription": "Workflow Description"
+  },
+  "agents": {
+    "title": "Agent Management",
+    "description": "Configure and manage your AI agents",
+    "createAgent": "Create New Agent",
+    "agentName": "Agent Name",
+    "agentRole": "Agent Role",
+    "agentGoal": "Agent Goal",
+    "agentBackstory": "Agent Backstory",
+    "llmModel": "LLM Model"
+  },
+  "tasks": {
+    "title": "Task Management",
+    "description": "Define and organize your workflow tasks",
+    "createTask": "Create New Task",
+    "taskName": "Task Name",
+    "taskDescription": "Task Description",
+    "assignedAgent": "Assigned Agent",
+    "taskInstructions": "Task Instructions",
+    "dependencies": "Dependencies"
+  },
+  "tools": {
+    "title": "Tool Management",
+    "description": "Manage available tools for your agents",
+    "createTool": "Create New Tool",
+    "toolName": "Tool Name",
+    "toolDescription": "Tool Description",
+    "toolType": "Tool Type"
+  },
+  "llmConnections": {
+    "title": "LLM Connections",
+    "description": "Manage and configure your connections to various Large Language Models",
+    "testConnection": "Test Connection",
+    "saveConfiguration": "Save Configuration",
+    "apiKey": "API Key",
+    "organizationId": "Organization ID",
+    "hostUrl": "Host URL",
+    "connectionSuccessful": "Connection Successful",
+    "connectionFailed": "Connection Failed",
+    "apiKeyMissing": "API Key Missing",
+    "hostMissing": "Host Missing",
+    "gemini": {
+      "title": "Google Gemini Configuration",
+      "description": "Enter your Google AI Studio API key to connect to Gemini models"
+    },
+    "openai": {
+      "title": "OpenAI Configuration",
+      "description": "Configure your connection to OpenAI models like GPT-4, GPT-3.5, etc.",
+      "orgIdOptional": "Organization ID (Optional)"
+    },
+    "deepseek": {
+      "title": "Deepseek Configuration",
+      "description": "Provide your API key to connect to Deepseek models"
+    },
+    "ollama": {
+      "title": "Ollama Configuration",
+      "description": "Configure your connection to local Ollama instance"
+    },
+    "anthropic": {
+      "title": "Anthropic Configuration",
+      "description": "Enter your Anthropic API key to connect to Claude models"
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "english": "English",
+    "chinese": "中文"
+  }
+}

@@ -1,0 +1,50 @@
+# Python version requirements: >=3.10 <3.14
+# Core dependencies for CrewAI Studio Backend
+
+# FastAPI core dependencies
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# CrewAI framework
+crewai
+crewai-tools
+
+# Database
+sqlalchemy
+alembic
+
+# Authentication and security
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# HTTP client
+httpx
+requests
+
+# Environment and configuration
+python-dotenv
+
+# Utilities
+python-dateutil
+typing-extensions
+
+# File handling
+aiofiles
+
+# Logging
+loguru
+
+# Data validation
+email-validator
+
+# JSON handling
+orjson
+
+# Additional LLM providers
+langchain-community
+langchain-openai
+ollama
+openai
