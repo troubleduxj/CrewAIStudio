@@ -353,7 +353,7 @@ function WorkflowEditor() {
       
       {/* 顶部工具栏 */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-14 items-center px-4 justify-between">
+        <div className="flex h-10 items-center px-4 justify-between">
           {/* 左侧：工作流名称和状态 */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -363,11 +363,11 @@ function WorkflowEditor() {
                   setWorkflowName(e.target.value);
                   setIsModified(true);
                 }}
-                className="text-lg font-semibold border-none bg-transparent p-0 h-auto focus-visible:ring-0"
+                className="text-sm font-medium border-none bg-transparent p-0 h-auto focus-visible:ring-0"
                 placeholder="工作流名称"
               />
               {isModified && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs px-1 py-0">
                   未保存
                 </Badge>
               )}
@@ -383,13 +383,13 @@ function WorkflowEditor() {
           {/* 中间：视图切换按钮 */}
           <div className="flex items-center">
             <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as 'visual-editor' | 'execution')} className="">
-              <TabsList className="flex">
-                <TabsTrigger value="visual-editor" className="gap-2">
-                  <Settings className="h-4 w-4" />
+              <TabsList className="flex h-8">
+                <TabsTrigger value="visual-editor" className="gap-1 text-sm h-6">
+                  <Settings className="h-3 w-3" />
                   Visual Editor
                 </TabsTrigger>
-                <TabsTrigger value="execution" className="gap-2">
-                  <Play className="h-4 w-4" />
+                <TabsTrigger value="execution" className="gap-1 text-sm h-6">
+                  <Play className="h-3 w-3" />
                   Execution
                 </TabsTrigger>
               </TabsList>
@@ -401,7 +401,7 @@ function WorkflowEditor() {
             <Button
               onClick={runWorkflow}
               disabled={isExecuting || nodes.length === 0}
-              className="gap-2"
+              className="gap-1 h-8 px-3 text-sm"
               title="运行工作流 (Ctrl+R)"
             >
               {isExecuting ? (
@@ -416,7 +416,7 @@ function WorkflowEditor() {
               variant="outline"
               onClick={saveWorkflow}
               disabled={!isModified}
-              className="gap-2"
+              className="gap-1 h-8 px-3 text-sm"
               title="保存工作流 (Ctrl+S)"
             >
               <Save className="h-4 w-4" />
@@ -426,7 +426,7 @@ function WorkflowEditor() {
             <Button
               variant="outline"
               onClick={exportWorkflow}
-              className="gap-2"
+              className="gap-1 h-8 px-3 text-sm"
               title="导出工作流 (Ctrl+E)"
             >
               <Download className="h-4 w-4" />
@@ -436,30 +436,30 @@ function WorkflowEditor() {
             <Button
               variant="outline"
               onClick={importWorkflow}
-              className="gap-2"
+              className="gap-1 h-8 px-3 text-sm"
               title="导入工作流 (Ctrl+O)"
             >
               <Upload className="h-4 w-4" />
               导入
             </Button>
             
-            <Button variant="outline" size="icon" title="设置">
-              <Settings className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="设置">
+              <Settings className="h-3 w-3" />
             </Button>
             
             {/* Tools面板切换按钮 - 只在Visual Editor视图显示 */}
             {currentView === 'visual-editor' && (
               <Button 
                 variant="outline" 
-                size="icon"
+                size="sm"
                 onClick={() => setIsToolsPanelOpen(!isToolsPanelOpen)}
-                className="ml-2"
+                className="ml-2 h-8 w-8 p-0"
                 title={isToolsPanelOpen ? '隐藏工具面板' : '显示工具面板'}
               >
                 {isToolsPanelOpen ? (
-                  <PanelRightClose className="h-4 w-4" />
+                  <PanelRightClose className="h-3 w-3" />
                 ) : (
-                  <PanelRightOpen className="h-4 w-4" />
+                  <PanelRightOpen className="h-3 w-3" />
                 )}
               </Button>
             )}

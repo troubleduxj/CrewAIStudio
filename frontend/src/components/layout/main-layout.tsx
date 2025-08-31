@@ -1,7 +1,7 @@
 "use client"
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container, ListChecks, Network } from 'lucide-react';
+import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container, ListChecks, Network, Store } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -27,6 +27,7 @@ const menuItems = {
     { href: '/agents', label: 'Agent 面板', icon: Users },
     { href: '/tasks', label: 'Task 面板', icon: ListChecks },
     { href: '/tools', label: '工具面板', icon: Wrench },
+    { href: '/marketplace', label: 'Marketplace', icon: Store },
   ],
   operate: [
     { href: '/traces', label: 'Traces', icon: Spline },
@@ -61,7 +62,7 @@ export default function MainLayout({
               style={{ filter: 'drop-shadow(0 0 5px hsl(var(--primary)))' }}
             />
             <span className="text-lg font-semibold text-foreground group-data-[collapsible=icon]:hidden">
-              CrewView
+              CrewAIStudio
             </span>
           </div>
         </SidebarHeader>
