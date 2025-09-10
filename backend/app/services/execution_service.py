@@ -21,6 +21,16 @@ from .crewai_service import CrewAIService
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+def _ensure_datetime(dt_value):
+    """确保值是datetime对象，如果是字符串则转换为datetime"""
+    if isinstance(dt_value, str):
+        try:
+            return datetime.fromisoformat(dt_value.replace('Z', '+00:00'))
+        except ValueError:
+            logger.warning(f"Failed to parse datetime string: {dt_value}")
+            return None
+    return dt_value
+
 class ExecutionType(Enum):
     """执行类型枚举"""
     TASK = "task"
@@ -35,7 +45,7 @@ class ExecutionContext:
     target_id: int
     user_id: Optional[str] = None
     inputs: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    meta_data: Optional[Dict[str, Any]] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     status: str = "pending"
@@ -50,17 +60,35 @@ class ExecutionContext:
             self.logs = []
 
 class ExecutionService:
-    """执行服务类"""
+    """执行服务类 - 单例模式"""
     
-    def __init__(self, db: Session):
+    _instance = None
+    _lock = threading.Lock()
+    
+    def __new__(cls):
+        """单例模式实现"""
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(ExecutionService, cls).__new__(cls)
+                    cls._instance._initialized = False
+        return cls._instance
+    
+    def __init__(self):
         """
         初始化执行服务
-        
-        Args:
-            db: 数据库会话
         """
-        self.db = db
-        self.crewai_service = CrewAIService(db)
+        if self._initialized:
+            return
+            
+        from app.core.database import SessionLocal
+        self.SessionLocal = SessionLocal
+        # 创建一个数据库会话用于初始化CrewAIService
+        db = SessionLocal()
+        try:
+            self.crewai_service = CrewAIService(db)
+        finally:
+            db.close()
         self.executor = ThreadPoolExecutor(max_workers=8)
         self.execution_contexts: Dict[str, ExecutionContext] = {}
         self.execution_futures: Dict[str, Future] = {}
@@ -78,20 +106,27 @@ class ExecutionService:
         # 当前执行计数
         self.current_task_executions = 0
         self.current_workflow_executions = 0
+        
+        self._initialized = True
     
-    async def execute_task(self, task_id: int, inputs: Optional[Dict[str, Any]] = None, user_id: Optional[str] = None) -> str:
+    def _get_db_session(self):
+        """获取新的数据库会话"""
+        return self.SessionLocal()
+    
+    async def execute_task(self, task_id: int, db: Session, inputs: Optional[Dict[str, Any]] = None, user_id: Optional[str] = None) -> str:
         """
         执行单个任务
         
         Args:
             task_id: 任务ID
+            db: 数据库会话
             inputs: 输入参数
             user_id: 用户ID
             
         Returns:
             str: 执行ID
         """
-        task = self.db.query(Task).filter(Task.id == task_id).first()
+        task = db.query(Task).filter(Task.id == task_id).first()
         if not task:
             raise ValueError(f"Task {task_id} not found")
         
@@ -106,7 +141,7 @@ class ExecutionService:
             target_id=task_id,
             user_id=user_id,
             inputs=inputs or {},
-            metadata={"task_name": task.name, "task_type": task.task_type.value if task.task_type else None}
+            meta_data={"task_name": task.name, "task_type": task.task_type.value if task.task_type else None}
         )
         
         with self.lock:
@@ -123,26 +158,27 @@ class ExecutionService:
         
         return execution_id
     
-    async def execute_workflow(self, workflow_id: int, inputs: Optional[Dict[str, Any]] = None, user_id: Optional[str] = None) -> str:
+    async def execute_workflow(self, workflow_id: int, db: Session, inputs: Optional[Dict[str, Any]] = None, user_id: Optional[str] = None) -> str:
         """
         执行工作流
         
         Args:
             workflow_id: 工作流ID
+            db: 数据库会话
             inputs: 输入参数
             user_id: 用户ID
             
         Returns:
             str: 执行ID
         """
-        workflow = self.db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
         if not workflow:
             raise ValueError(f"Workflow {workflow_id} not found")
         
         if not workflow.is_active:
             raise ValueError(f"Workflow {workflow_id} is not active")
         
-        if workflow.status not in [WorkflowStatus.READY, WorkflowStatus.PAUSED]:
+        if workflow.status not in [WorkflowStatus.ACTIVE, WorkflowStatus.PAUSED]:
             raise ValueError(f"Workflow {workflow_id} is not in executable state")
         
         # 创建执行上下文
@@ -153,7 +189,7 @@ class ExecutionService:
             target_id=workflow_id,
             user_id=user_id,
             inputs=inputs or {},
-            metadata={
+            meta_data={
                 "workflow_name": workflow.name,
                 "workflow_type": workflow.workflow_type.value,
                 "execution_mode": workflow.execution_mode.value
@@ -202,7 +238,7 @@ class ExecutionService:
             target_id=agent_id,
             user_id=user_id,
             inputs=inputs or {},
-            metadata={
+            meta_data={
                 "agent_name": agent.name,
                 "task_description": task_description,
                 "agent_role": agent.role
@@ -231,14 +267,18 @@ class ExecutionService:
         context.started_at = datetime.utcnow()
         
         # 更新数据库中的任务状态
-        task = self.db.query(Task).filter(Task.id == context.target_id).first()
-        if task:
-            task.status = TaskStatus.RUNNING
-            task.started_at = context.started_at
-            self.db.commit()
+        db = self._get_db_session()
+        try:
+            task = db.query(Task).filter(Task.id == context.target_id).first()
+            if task:
+                task.status = TaskStatus.RUNNING
+                task.started_at = context.started_at
+                db.commit()
+        finally:
+            db.close()
         
         # 在线程池中执行任务
-        future = self.executor.submit(self._execute_task_sync, context)
+        future = self.executor.submit(self._execute_task_sync, context, self._get_db_session())
         self.execution_futures[context.execution_id] = future
         
         # 添加完成回调
@@ -260,11 +300,15 @@ class ExecutionService:
         context.started_at = datetime.utcnow()
         
         # 更新数据库中的工作流状态
-        workflow = self.db.query(Workflow).filter(Workflow.id == context.target_id).first()
-        if workflow:
-            workflow.status = WorkflowStatus.RUNNING
-            workflow.started_at = context.started_at
-            self.db.commit()
+        db = self._get_db_session()
+        try:
+            workflow = db.query(Workflow).filter(Workflow.id == context.target_id).first()
+            if workflow:
+                workflow.status = WorkflowStatus.RUNNING
+                workflow.started_at = context.started_at
+                db.commit()
+        finally:
+            db.close()
         
         # 在线程池中执行工作流
         future = self.executor.submit(self._execute_workflow_sync, context)
@@ -295,18 +339,19 @@ class ExecutionService:
         
         logger.info(f"Started agent execution: {context.execution_id}")
     
-    def _execute_task_sync(self, context: ExecutionContext) -> Any:
+    def _execute_task_sync(self, context: ExecutionContext, db: Session) -> str:
         """
         同步执行任务
         
         Args:
             context: 执行上下文
+            db: 数据库会话
             
         Returns:
-            Any: 执行结果
+            str: 执行结果
         """
         try:
-            task = self.db.query(Task).filter(Task.id == context.target_id).first()
+            task = db.query(Task).filter(Task.id == context.target_id).first()
             if not task:
                 raise ValueError(f"Task {context.target_id} not found")
             
@@ -316,14 +361,14 @@ class ExecutionService:
             if task.dependencies:
                 context.logs.append("Checking task dependencies...")
                 for dep_id in task.dependencies:
-                    dep_task = self.db.query(Task).filter(Task.id == dep_id).first()
+                    dep_task = db.query(Task).filter(Task.id == dep_id).first()
                     if not dep_task or dep_task.status != TaskStatus.COMPLETED:
                         raise ValueError(f"Dependency task {dep_id} not completed")
             
             # 获取关联的Agent
             agent = None
             if task.agent_id:
-                agent = self.db.query(Agent).filter(Agent.id == task.agent_id).first()
+                agent = db.query(Agent).filter(Agent.id == task.agent_id).first()
                 if not agent:
                     raise ValueError(f"Agent {task.agent_id} not found")
             
@@ -342,10 +387,10 @@ class ExecutionService:
                     result = f"Task {task.name} completed using CrewAI"
                 else:
                     # 回退到简单执行
-                    result = self._execute_simple_task(task, context)
+                    result = self._execute_simple_task(task, context, db)
             else:
                 # 简单执行
-                result = self._execute_simple_task(task, context)
+                result = self._execute_simple_task(task, context, db)
             
             context.logs.append(f"Task execution completed: {result}")
             return result
@@ -364,8 +409,9 @@ class ExecutionService:
         Returns:
             Any: 执行结果
         """
+        db = self._get_db_session()
         try:
-            workflow = self.db.query(Workflow).filter(Workflow.id == context.target_id).first()
+            workflow = db.query(Workflow).filter(Workflow.id == context.target_id).first()
             if not workflow:
                 raise ValueError(f"Workflow {context.target_id} not found")
             
@@ -385,13 +431,15 @@ class ExecutionService:
                     context.logs.append("Failed to create CrewAI crew, falling back to simple execution")
             
             # 回退到简单执行
-            result = self._execute_simple_workflow(workflow, context)
+            result = self._execute_simple_workflow(workflow, context, db)
             context.logs.append(f"Workflow execution completed: {result}")
             return result
             
         except Exception as e:
             context.logs.append(f"Workflow execution failed: {str(e)}")
             raise
+        finally:
+            db.close()
     
     def _execute_agent_sync(self, context: ExecutionContext, task_description: str) -> Any:
         """
@@ -442,13 +490,14 @@ class ExecutionService:
             context.logs.append(f"Agent execution failed: {str(e)}")
             raise
     
-    def _execute_simple_task(self, task: Task, context: ExecutionContext) -> str:
+    def _execute_simple_task(self, task: Task, context: ExecutionContext, db: Session) -> str:
         """
         简单任务执行（模拟）
         
         Args:
             task: 任务实例
             context: 执行上下文
+            db: 数据库会话
             
         Returns:
             str: 执行结果
@@ -467,17 +516,18 @@ class ExecutionService:
             
             # 更新数据库中的进度
             task.progress_percentage = progress
-            self.db.commit()
+            db.commit()
         
         return f"Task '{task.name}' completed successfully with inputs: {context.inputs}"
     
-    def _execute_simple_workflow(self, workflow: Workflow, context: ExecutionContext) -> str:
+    def _execute_simple_workflow(self, workflow: Workflow, context: ExecutionContext, db: Session) -> str:
         """
         简单工作流执行（模拟）
         
         Args:
             workflow: 工作流实例
             context: 执行上下文
+            db: 数据库会话
             
         Returns:
             str: 执行结果
@@ -499,9 +549,15 @@ class ExecutionService:
             workflow.progress_percentage = progress
             workflow.completed_steps = i + 1
             workflow.current_step = context.current_step
-            self.db.commit()
+            db.commit()
         
-        return f"Workflow '{workflow.name}' completed successfully with {steps} steps"
+        return {
+            "status": "completed",
+            "message": f"Workflow '{workflow.name}' completed successfully with {steps} steps",
+            "completed_steps": steps,
+            "total_steps": steps,
+            "workflow_name": workflow.name
+        }
     
     def _execute_simple_agent(self, agent: Agent, task_description: str, context: ExecutionContext) -> str:
         """
@@ -548,18 +604,28 @@ class ExecutionService:
             context.completed_at = datetime.utcnow()
             
             # 更新数据库中的任务状态
-            task = self.db.query(Task).filter(Task.id == context.target_id).first()
-            if task:
-                task.status = TaskStatus.COMPLETED
-                task.completed_at = context.completed_at
-                task.result = result
-                task.progress_percentage = 100
-                
-                if task.started_at:
-                    duration = int((task.completed_at - task.started_at).total_seconds())
-                    task.execution_duration = duration
-                
-                self.db.commit()
+            db = self._get_db_session()
+            try:
+                task = db.query(Task).filter(Task.id == context.target_id).first()
+                if task:
+                    task.status = TaskStatus.COMPLETED
+                    task.completed_at = context.completed_at
+                    task.result = result
+                    task.progress_percentage = 100
+                    
+                    if task.started_at:
+                        try:
+                            started_at = _ensure_datetime(task.started_at)
+                            completed_at = _ensure_datetime(task.completed_at)
+                            if started_at and completed_at:
+                                duration = int((completed_at - started_at).total_seconds())
+                                task.execution_duration = duration
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Failed to calculate task execution duration: {e}")
+                    
+                    db.commit()
+            finally:
+                db.close()
             
             logger.info(f"Task execution completed: {execution_id}")
             
@@ -569,12 +635,16 @@ class ExecutionService:
             context.completed_at = datetime.utcnow()
             
             # 更新数据库中的任务状态
-            task = self.db.query(Task).filter(Task.id == context.target_id).first()
-            if task:
-                task.status = TaskStatus.FAILED
-                task.completed_at = context.completed_at
-                task.last_error = str(e)
-                self.db.commit()
+            db = self._get_db_session()
+            try:
+                task = db.query(Task).filter(Task.id == context.target_id).first()
+                if task:
+                    task.status = TaskStatus.FAILED
+                    task.completed_at = context.completed_at
+                    task.last_error = str(e)
+                    db.commit()
+            finally:
+                db.close()
             
             logger.error(f"Task execution failed: {execution_id} - {str(e)}")
         
@@ -584,7 +654,16 @@ class ExecutionService:
                 self.current_task_executions -= 1
             
             # 处理队列中的下一个任务
-            asyncio.create_task(self._process_task_queue())
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(self._process_task_queue())
+                else:
+                    # 如果没有运行的事件循环，跳过队列处理
+                    pass
+            except RuntimeError:
+                # 如果没有事件循环，跳过队列处理
+                pass
             
             # 执行回调
             self._execute_callbacks(execution_id)
@@ -608,28 +687,40 @@ class ExecutionService:
             context.completed_at = datetime.utcnow()
             
             # 更新数据库中的工作流状态
-            workflow = self.db.query(Workflow).filter(Workflow.id == context.target_id).first()
-            if workflow:
-                workflow.status = WorkflowStatus.COMPLETED
-                workflow.completed_at = context.completed_at
-                workflow.result = result
-                workflow.progress_percentage = 100
-                workflow.execution_count += 1
-                workflow.success_count += 1
-                
-                if workflow.started_at:
-                    duration = int((workflow.completed_at - workflow.started_at).total_seconds())
-                    workflow.execution_duration = duration
+            db = self._get_db_session()
+            try:
+                workflow = db.query(Workflow).filter(Workflow.id == context.target_id).first()
+                if workflow:
+                    workflow.status = WorkflowStatus.COMPLETED
+                    workflow.completed_at = context.completed_at
+                    workflow.execution_result = result
+                    workflow.progress_percentage = 100
+                    workflow.execution_count += 1
+                    workflow.success_count += 1
                     
-                    # 更新平均执行时间
-                    if workflow.average_execution_time:
-                        workflow.average_execution_time = (
-                            workflow.average_execution_time * (workflow.execution_count - 1) + duration
-                        ) / workflow.execution_count
-                    else:
-                        workflow.average_execution_time = duration
-                
-                self.db.commit()
+                    if workflow.started_at:
+                        try:
+                            started_at = _ensure_datetime(workflow.started_at)
+                            completed_at = _ensure_datetime(workflow.completed_at)
+                            if started_at and completed_at:
+                                duration = int((completed_at - started_at).total_seconds())
+                                workflow.execution_duration = duration
+                                
+                                # 更新平均执行时间
+                                if workflow.average_execution_time:
+                                    workflow.average_execution_time = (
+                                        workflow.average_execution_time * (workflow.execution_count - 1) + duration
+                                    ) / workflow.execution_count
+                                else:
+                                    workflow.average_execution_time = duration
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Failed to calculate workflow execution duration: {e}")
+                        else:
+                            workflow.average_execution_time = duration
+                    
+                    db.commit()
+            finally:
+                db.close()
             
             logger.info(f"Workflow execution completed: {execution_id}")
             
@@ -639,14 +730,18 @@ class ExecutionService:
             context.completed_at = datetime.utcnow()
             
             # 更新数据库中的工作流状态
-            workflow = self.db.query(Workflow).filter(Workflow.id == context.target_id).first()
-            if workflow:
-                workflow.status = WorkflowStatus.FAILED
-                workflow.completed_at = context.completed_at
-                workflow.last_error = str(e)
-                workflow.execution_count += 1
-                workflow.failure_count += 1
-                self.db.commit()
+            db = self._get_db_session()
+            try:
+                workflow = db.query(Workflow).filter(Workflow.id == context.target_id).first()
+                if workflow:
+                    workflow.status = WorkflowStatus.FAILED
+                    workflow.completed_at = context.completed_at
+                    workflow.error_message = str(e)
+                    workflow.execution_count += 1
+                    workflow.failure_count += 1
+                    db.commit()
+            finally:
+                db.close()
             
             logger.error(f"Workflow execution failed: {execution_id} - {str(e)}")
         
@@ -656,7 +751,16 @@ class ExecutionService:
                 self.current_workflow_executions -= 1
             
             # 处理队列中的下一个工作流
-            asyncio.create_task(self._process_workflow_queue())
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(self._process_workflow_queue())
+                else:
+                    # 如果没有运行的事件循环，跳过队列处理
+                    pass
+            except RuntimeError:
+                # 如果没有事件循环，跳过队列处理
+                pass
             
             # 执行回调
             self._execute_callbacks(execution_id)
@@ -680,22 +784,32 @@ class ExecutionService:
             context.completed_at = datetime.utcnow()
             
             # 更新Agent统计信息
-            agent = self.db.query(Agent).filter(Agent.id == context.target_id).first()
-            if agent:
-                agent.total_executions += 1
-                agent.successful_executions += 1
-                agent.last_execution_at = context.completed_at
-                
-                if context.started_at:
-                    duration = int((context.completed_at - context.started_at).total_seconds())
-                    if agent.average_execution_time:
-                        agent.average_execution_time = (
-                            agent.average_execution_time * (agent.total_executions - 1) + duration
-                        ) / agent.total_executions
-                    else:
-                        agent.average_execution_time = duration
-                
-                self.db.commit()
+            db = self._get_db_session()
+            try:
+                agent = db.query(Agent).filter(Agent.id == context.target_id).first()
+                if agent:
+                    agent.total_executions += 1
+                    agent.successful_executions += 1
+                    agent.last_execution_at = context.completed_at
+                    
+                    if context.started_at:
+                        try:
+                            started_at = _ensure_datetime(context.started_at)
+                            completed_at = _ensure_datetime(context.completed_at)
+                            if started_at and completed_at:
+                                duration = int((completed_at - started_at).total_seconds())
+                                if agent.average_execution_time:
+                                    agent.average_execution_time = (
+                                        agent.average_execution_time * (agent.total_executions - 1) + duration
+                                    ) / agent.total_executions
+                                else:
+                                    agent.average_execution_time = duration
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Failed to calculate agent execution duration: {e}")
+                    
+                    db.commit()
+            finally:
+                db.close()
             
             logger.info(f"Agent execution completed: {execution_id}")
             
@@ -705,12 +819,16 @@ class ExecutionService:
             context.completed_at = datetime.utcnow()
             
             # 更新Agent统计信息
-            agent = self.db.query(Agent).filter(Agent.id == context.target_id).first()
-            if agent:
-                agent.total_executions += 1
-                agent.failed_executions += 1
-                agent.last_execution_at = context.completed_at
-                self.db.commit()
+            db = self._get_db_session()
+            try:
+                agent = db.query(Agent).filter(Agent.id == context.target_id).first()
+                if agent:
+                    agent.total_executions += 1
+                    agent.failed_executions += 1
+                    agent.last_execution_at = context.completed_at
+                    db.commit()
+            finally:
+                db.close()
             
             logger.error(f"Agent execution failed: {execution_id} - {str(e)}")
         
@@ -760,7 +878,7 @@ class ExecutionService:
             "result": context.result,
             "error": context.error,
             "logs": context.logs,
-            "metadata": context.metadata
+            "meta_data": context.meta_data
         }
     
     def stop_execution(self, execution_id: str) -> bool:
@@ -800,18 +918,22 @@ class ExecutionService:
                 context.completed_at = datetime.utcnow()
                 
                 # 更新数据库状态
-                if context.execution_type == ExecutionType.TASK:
-                    task = self.db.query(Task).filter(Task.id == context.target_id).first()
-                    if task:
-                        task.status = TaskStatus.CANCELLED
-                        task.completed_at = context.completed_at
-                        self.db.commit()
-                elif context.execution_type == ExecutionType.WORKFLOW:
-                    workflow = self.db.query(Workflow).filter(Workflow.id == context.target_id).first()
-                    if workflow:
-                        workflow.status = WorkflowStatus.CANCELLED
-                        workflow.completed_at = context.completed_at
-                        self.db.commit()
+                db = self._get_db_session()
+                try:
+                    if context.execution_type == ExecutionType.TASK:
+                        task = db.query(Task).filter(Task.id == context.target_id).first()
+                        if task:
+                            task.status = TaskStatus.CANCELLED
+                            task.completed_at = context.completed_at
+                            db.commit()
+                    elif context.execution_type == ExecutionType.WORKFLOW:
+                        workflow = db.query(Workflow).filter(Workflow.id == context.target_id).first()
+                        if workflow:
+                            workflow.status = WorkflowStatus.CANCELLED
+                            workflow.completed_at = context.completed_at
+                            db.commit()
+                finally:
+                    db.close()
                 
                 logger.info(f"Execution {execution_id} cancelled")
                 return True
@@ -915,3 +1037,24 @@ class ExecutionService:
         """
         if hasattr(self, 'executor'):
             self.executor.shutdown(wait=True)
+
+
+# 全局ExecutionService实例
+_execution_service_instance = None
+_execution_service_lock = threading.Lock()
+
+def get_execution_service() -> ExecutionService:
+    """
+    获取ExecutionService单例实例
+    
+    Returns:
+        ExecutionService: ExecutionService实例
+    """
+    global _execution_service_instance
+    
+    if _execution_service_instance is None:
+        with _execution_service_lock:
+            if _execution_service_instance is None:
+                _execution_service_instance = ExecutionService()
+    
+    return _execution_service_instance

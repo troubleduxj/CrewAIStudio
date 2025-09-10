@@ -2,7 +2,6 @@
 
 import type { ResearchOutput } from '@/lib/types';
 import type { AdjustTaskParametersInput, AdjustTaskParametersOutput } from '@/lib/ai-types';
-import { adjustTaskParameters } from '@/server/ai/flows/adjust-task-parameters';
 
 /**
  * 处理研究请求的服务器动作
@@ -15,23 +14,39 @@ export async function handleResearch({ topic }: { topic: string }): Promise<{
   error?: string;
 }> {
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 模拟研究结果
-    const mockResult: ResearchOutput = {
-      result: `# Research Analysis: ${topic}\n\n## Summary\nThis is a mock research summary for: ${topic}. The analysis shows various insights and findings related to the topic.\n\n## Key Findings\n- Key finding 1: Important insight discovered\n- Key finding 2: Significant trend identified\n- Key finding 3: Notable pattern observed\n\n## Sources\n- https://example.com/source1\n- https://example.com/source2\n- https://example.com/source3\n\n*Analysis completed at: ${new Date().toISOString()}*`
-    };
+    // 调用后端CrewAI研究分析API
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/research/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ topic }),
+    });
 
-    return {
-      success: true,
-      data: mockResult
-    };
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return {
+        success: true,
+        data: {
+          result: result.result
+        }
+      };
+    } else {
+      return {
+        success: false,
+        error: result.message || 'Research analysis failed'
+      };
+    }
   } catch (error) {
     console.error('Research error:', error);
     return {
       success: false,
-      error: 'Failed to complete research analysis'
+      error: error instanceof Error ? error.message : 'Failed to complete research analysis'
     };
   }
 }
@@ -47,7 +62,18 @@ export async function handleAdjustTaskParameters(params: AdjustTaskParametersInp
   error?: string;
 }> {
   try {
-    const result = await adjustTaskParameters(params);
+    // TODO: 实现CrewAI后端API调用来替代adjustTaskParameters
+    // const result = await adjustTaskParameters(params);
+    
+    // 临时返回模拟结果
+    const result: AdjustTaskParametersOutput = {
+      adjustedParameters: {
+        priority: 'medium',
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        resources: ['default']
+      },
+      reasoning: 'Task parameters adjusted based on current workload and agent performance.'
+    };
     return {
       success: true,
       data: result

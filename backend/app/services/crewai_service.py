@@ -29,6 +29,7 @@ from ..models.agent import Agent
 from ..models.task import Task, TaskStatus
 from ..models.workflow import Workflow, WorkflowStatus
 from ..core.config import get_settings
+from ..tools import BrowserTool, CalculatorTool, FileReaderTool
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -304,19 +305,30 @@ class CrewAIService:
                 workflow.completed_at = datetime.utcnow()
                 workflow.execution_count += 1
                 workflow.success_count += 1
-                workflow.result = result
+                workflow.execution_result = result
                 
                 if workflow.started_at:
-                    duration = int((workflow.completed_at - workflow.started_at).total_seconds())
-                    workflow.execution_duration = duration
-                    
-                    # 更新平均执行时间
-                    if workflow.average_execution_time:
-                        workflow.average_execution_time = (
-                            workflow.average_execution_time * (workflow.execution_count - 1) + duration
-                        ) / workflow.execution_count
-                    else:
-                        workflow.average_execution_time = duration
+                    try:
+                        # 确保started_at是datetime对象
+                        if isinstance(workflow.started_at, str):
+                            from datetime import datetime
+                            started_at = datetime.fromisoformat(workflow.started_at.replace('Z', '+00:00'))
+                        else:
+                            started_at = workflow.started_at
+                        
+                        duration = int((workflow.completed_at - started_at).total_seconds())
+                        workflow.execution_duration = duration
+                        
+                        # 更新平均执行时间
+                        if workflow.average_execution_time:
+                            workflow.average_execution_time = (
+                                workflow.average_execution_time * (workflow.execution_count - 1) + duration
+                            ) / workflow.execution_count
+                        else:
+                            workflow.average_execution_time = duration
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"Failed to calculate execution duration: {e}")
+                        workflow.execution_duration = None
                 
                 self.db.commit()
             
@@ -339,7 +351,7 @@ class CrewAIService:
                 workflow.completed_at = datetime.utcnow()
                 workflow.execution_count += 1
                 workflow.failure_count += 1
-                workflow.last_error = str(e)
+                workflow.error_message = str(e)
                 self.db.commit()
             
             logger.error(f"Crew execution failed for workflow {workflow_id}: {str(e)}")
@@ -349,7 +361,7 @@ class CrewAIService:
                 "error": str(e)
             }
     
-    def _execute_crew_sync(self, crew: Crew, execution_id: str, inputs: Dict[str, Any]) -> Any:
+    def _execute_crew_sync(self, crew: Crew, execution_id: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         同步执行crew（在线程池中运行）
         
@@ -359,12 +371,29 @@ class CrewAIService:
             inputs: 输入参数
             
         Returns:
-            Any: 执行结果
+            Dict[str, Any]: 执行结果
         """
         try:
             # 执行crew
-            result = crew.kickoff(inputs=inputs)
-            return result
+            raw_result = crew.kickoff(inputs=inputs)
+            
+            # 确保返回字典格式
+            if isinstance(raw_result, dict):
+                return raw_result
+            elif isinstance(raw_result, str):
+                return {
+                    "status": "completed",
+                    "message": raw_result,
+                    "execution_id": execution_id,
+                    "raw_output": raw_result
+                }
+            else:
+                return {
+                    "status": "completed",
+                    "message": str(raw_result),
+                    "execution_id": execution_id,
+                    "raw_output": str(raw_result)
+                }
         except Exception as e:
             logger.error(f"Sync crew execution failed: {str(e)}")
             raise
@@ -544,16 +573,26 @@ class CrewAIService:
             
             try:
                 # 根据工具类型创建相应的工具实例
-                if tool_type == 'web_search':
-                    tools.append(self._create_web_search_tool(tool_config))
+                if tool_type == 'web_search' or tool_type == 'browser':
+                    tool = self._create_browser_tool(tool_config)
+                    if tool:
+                        tools.append(tool)
                 elif tool_type == 'file_read':
-                    tools.append(self._create_file_read_tool(tool_config))
+                    tool = self._create_file_read_tool(tool_config)
+                    if tool:
+                        tools.append(tool)
                 elif tool_type == 'file_write':
-                    tools.append(self._create_file_write_tool(tool_config))
+                    tool = self._create_file_write_tool(tool_config)
+                    if tool:
+                        tools.append(tool)
                 elif tool_type == 'calculator':
-                    tools.append(self._create_calculator_tool(tool_config))
+                    tool = self._create_calculator_tool(tool_config)
+                    if tool:
+                        tools.append(tool)
                 elif tool_type == 'code_executor':
-                    tools.append(self._create_code_executor_tool(tool_config))
+                    tool = self._create_code_executor_tool(tool_config)
+                    if tool:
+                        tools.append(tool)
                 else:
                     logger.warning(f"Unsupported tool type: {tool_type}")
                     
@@ -561,6 +600,23 @@ class CrewAIService:
                 logger.error(f"Failed to create tool {tool_name}: {str(e)}")
         
         return tools
+    
+    def _create_browser_tool(self, config: Dict[str, Any]) -> Optional[BaseTool]:
+        """
+        创建浏览器工具（网页抓取）
+        
+        Args:
+            config: 工具配置
+            
+        Returns:
+            Optional[BaseTool]: 浏览器工具实例或None
+        """
+        try:
+            # 使用自定义的 BrowserTool
+            return BrowserTool()
+        except Exception as e:
+            logger.error(f"Failed to create browser tool: {str(e)}")
+            return None
     
     def _create_web_search_tool(self, config: Dict[str, Any]) -> Optional[BaseTool]:
         """
@@ -590,10 +646,10 @@ class CrewAIService:
             Optional[BaseTool]: 工具实例或None
         """
         try:
-            from crewai_tools import FileReadTool
-            return FileReadTool()
-        except ImportError:
-            logger.error("FileReadTool not available")
+            # 使用自定义的 FileReaderTool
+            return FileReaderTool()
+        except Exception as e:
+            logger.error(f"Failed to create file read tool: {str(e)}")
             return None
     
     def _create_file_write_tool(self, config: Dict[str, Any]) -> Optional[BaseTool]:
@@ -623,9 +679,12 @@ class CrewAIService:
         Returns:
             Optional[BaseTool]: 工具实例或None
         """
-        # 这里可以创建自定义的计算器工具
-        # 或者使用现有的数学工具
-        return None
+        try:
+            # 使用自定义的 CalculatorTool
+            return CalculatorTool()
+        except Exception as e:
+            logger.error(f"Failed to create calculator tool: {str(e)}")
+            return None
     
     def _create_code_executor_tool(self, config: Dict[str, Any]) -> Optional[BaseTool]:
         """
@@ -653,34 +712,84 @@ class CrewAIService:
         """
         tools = [
             {
+                "name": "Browser",
+                "type": "browser",
+                "description": "Browse and extract content from web pages",
+                "available": True,
+                "parameters": {
+                    "url": {
+                        "type": "string",
+                        "description": "URL to browse and extract content from"
+                    }
+                }
+            },
+            {
                 "name": "Web Search",
                 "type": "web_search",
                 "description": "Search the web for information",
-                "available": self._check_tool_availability("SerperDevTool")
+                "available": self._check_tool_availability("SerperDevTool"),
+                "parameters": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search query"
+                    }
+                }
             },
             {
                 "name": "File Read",
                 "type": "file_read",
                 "description": "Read content from files",
-                "available": self._check_tool_availability("FileReadTool")
+                "available": True,
+                "parameters": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Path to the file to read"
+                    }
+                }
             },
             {
                 "name": "File Write",
                 "type": "file_write",
                 "description": "Write content to files",
-                "available": self._check_tool_availability("FileWriterTool")
+                "available": self._check_tool_availability("FileWriterTool"),
+                "parameters": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Path to the file to write"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to write to the file"
+                    }
+                }
             },
             {
                 "name": "Calculator",
                 "type": "calculator",
                 "description": "Perform mathematical calculations",
-                "available": True
+                "available": True,
+                "parameters": {
+                    "expression": {
+                        "type": "string",
+                        "description": "Mathematical expression to evaluate"
+                    }
+                }
             },
             {
                 "name": "Code Executor",
                 "type": "code_executor",
                 "description": "Execute code snippets",
-                "available": self._check_tool_availability("CodeInterpreterTool")
+                "available": self._check_tool_availability("CodeInterpreterTool"),
+                "parameters": {
+                    "code": {
+                        "type": "string",
+                        "description": "Code to execute"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Programming language"
+                    }
+                }
             }
         ]
         

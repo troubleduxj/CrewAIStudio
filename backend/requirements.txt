@@ -43,8 +43,17 @@ email-validator
 # JSON handling
 orjson
 
+# Web scraping
+beautifulsoup4
+
+# Testing
+pytest
+pytest-asyncio
+pytest-mock
+pytest-cov
+
 # Additional LLM providers
 langchain-community
 langchain-openai
-ollama
+# ollama
 openai

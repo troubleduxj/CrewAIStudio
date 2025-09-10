@@ -8,6 +8,16 @@ import json
 import logging
 import uuid
 
+def _ensure_datetime(dt_value):
+    """确保值是datetime对象，如果是字符串则转换为datetime"""
+    if isinstance(dt_value, str):
+        try:
+            return datetime.fromisoformat(dt_value.replace('Z', '+00:00'))
+        except ValueError:
+            logger.warning(f"Failed to parse datetime string: {dt_value}")
+            return None
+    return dt_value
+
 from ..models.task import Task, TaskStatus, TaskPriority
 from ..models.agent import Agent
 from ..schemas.task import TaskCreate, TaskUpdate, TaskSearchRequest
@@ -313,7 +323,13 @@ class TaskService:
         elif status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]:
             task.completed_at = datetime.utcnow()
             if task.started_at:
-                task.execution_time = (task.completed_at - task.started_at).total_seconds()
+                try:
+                    started_at = _ensure_datetime(task.started_at)
+                    completed_at = _ensure_datetime(task.completed_at)
+                    if started_at and completed_at:
+                        task.execution_time = (completed_at - started_at).total_seconds()
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Failed to calculate task execution time: {e}")
         
         try:
             self.db.commit()
@@ -618,7 +634,13 @@ class TaskService:
         task.updated_at = datetime.utcnow()
         
         if task.started_at:
-            task.execution_time = (task.completed_at - task.started_at).total_seconds()
+            try:
+                started_at = _ensure_datetime(task.started_at)
+                completed_at = _ensure_datetime(task.completed_at)
+                if started_at and completed_at:
+                    task.execution_time = (completed_at - started_at).total_seconds()
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Failed to calculate task execution time: {e}")
         
         try:
             self.db.commit()

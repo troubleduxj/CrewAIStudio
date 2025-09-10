@@ -198,7 +198,7 @@ class NotificationService:
             content=content,
             recipient=recipient,
             channel=channel,
-            metadata=metadata or {}
+            meta_data=metadata or {}
         )
         
         self.pending_notifications.append(notification)

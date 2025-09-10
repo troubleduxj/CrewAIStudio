@@ -19,7 +19,23 @@
     "success": "成功",
     "error": "错误",
     "confirm": "确认",
-    "close": "关闭"
+    "close": "关闭",
+    "next": "下一步",
+    "previous": "上一步",
+    "yes": "是",
+    "no": "否",
+    "required": "必填",
+    "show": "显示",
+    "hide": "隐藏",
+    "agents": "智能体",
+    "tasks": "任务",
+    "minutes": "分钟",
+    "hours": "小时",
+    "minute": "分钟",
+    "hour": "小时",
+    "notSet": "未设置",
+    "back_to_list": "返回列表",
+    "back": "返回"
   },
   "dashboard": {
     "title": "CrewAI 工作室",
@@ -106,5 +122,205 @@
   "language": {
     "english": "English",
     "chinese": "中文"
+  },
+  "workflowTemplates": {
+    "title": "工作流模板",
+    "description": "设计和管理可复用的工作流蓝图",
+    "createTemplate": "创建模板",
+    "editTemplate": "编辑模板",
+    "cloneTemplate": "克隆模板",
+    "createCrewFromTemplate": "从模板创建团队",
+    "noTemplates": "暂无工作流模板",
+    "noTemplatesDescription": "创建您的第一个工作流模板来开始使用",
+    "usages": "次使用"
+  },
+  "crews": {
+    "title": "我的团队",
+    "description": "创建、配置并运行您的 AI 执行团队",
+    "createCrew": "创建团队",
+    "runCrew": "运行团队",
+    "editCrew": "编辑团队",
+    "viewHistory": "查看历史",
+    "history": "历史",
+    "settings": "设置",
+    "noCrews": "暂无执行团队",
+    "noCrewsDescription": "基于工作流模板创建您的第一个执行团队",
+    "noCrewsFound": "未找到团队",
+    "noCrewsFoundDescription": "请尝试调整搜索或筛选条件",
+    "searchPlaceholder": "按名称、描述或模板搜索团队...",
+    "filterByStatus": "按状态筛选",
+    "allStatuses": "所有状态",
+    "activeFilters": "活动筛选",
+    "search": "搜索",
+    "status": "状态",
+    "showingResults": "显示 {{total}} 个团队中的 {{count}} 个",
+    "totalCrews": "共 {{count}} 个团队",
+    "executions": "次执行",
+    "successRate": "成功率",
+    "lastExecution": "最后执行",
+    "createdAt": "创建时间",
+    "neverExecuted": "从未执行",
+    "executionInProgress": "执行中",
+    "running": "运行中",
+    "estimatedTimeRemaining": "预计剩余时间",
+    "stats": {
+      "totalCrews": "团队总数",
+      "activeCrews": "活跃团队",
+      "runningCrews": "运行中团队",
+      "successRate": "成功率"
+    },
+    "status": {
+      "ready": "准备就绪",
+      "running": "运行中",
+      "disabled": "已禁用"
+    },
+    "sortBy": {
+      "name": "名称",
+      "createdAt": "创建日期",
+      "lastExecutionAt": "最后执行",
+      "successRate": "成功率"
+    },
+    "wizard": {
+      "title": "创建新团队",
+      "description": "按照以下步骤创建和配置您的 AI 执行团队",
+      "step": "步骤",
+      "of": "共",
+      "selectTemplate": "选择模板",
+      "selectTemplateDescription": "选择一个工作流模板作为您团队的基础",
+      "configureAgents": "配置智能体",
+      "configureAgentsDescription": "为团队中的每个智能体设置 LLM 模型和工具",
+      "crewDetails": "团队详情",
+      "crewDetailsDescription": "为您的新团队提供名称和描述",
+      "loadingTemplates": "加载模板中...",
+      "crewName": "团队名称",
+      "crewNamePlaceholder": "为您的团队输入一个描述性名称",
+      "crewDescription": "团队描述",
+      "crewDescriptionPlaceholder": "描述这个团队的设计目的",
+      "configurationSummary": "配置摘要",
+      "selectedTemplate": "选择的模板",
+      "configuredAgents": "已配置的智能体",
+      "createCrew": "创建团队",
+      "errors": {
+        "templateRequired": "请选择一个工作流模板",
+        "agentsRequired": "请至少配置一个智能体",
+        "llmRequired": "请选择一个 LLM 模型",
+        "nameRequired": "团队名称是必填的",
+        "nameTooLong": "团队名称必须少于 100 个字符"
+      }
+    },
+    "agent": {
+      "configurationRequired": "需要配置",
+      "agentInfo": "智能体信息",
+      "viewDetails": "查看详情",
+      "goal": "目标",
+      "backstory": "背景故事",
+      "requiredTools": "必需工具",
+      "llmConfiguration": "LLM 配置",
+      "llmModel": "LLM 模型",
+      "selectLLM": "选择 LLM 模型",
+      "maxTokens": "最大 Token 数",
+      "maxTokensTooltip": "模型可以生成的最大 token 数量",
+      "temperature": "温度",
+      "temperatureTooltip": "控制模型响应的随机性（0.0 = 确定性，2.0 = 非常创造性）",
+      "temperature": {
+        "conservative": "保守",
+        "balanced": "平衡",
+        "creative": "创造性"
+      },
+      "toolsConfiguration": "工具配置",
+      "required": "必需",
+      "apiKeysConfiguration": "API 密钥配置",
+      "enterApiKey": "输入 API 密钥",
+      "apiKeyNotice": "安全存储",
+      "apiKeyNoticeDescription": "API 密钥经过加密并安全存储。它们仅用于工具执行。",
+      "configurationPreview": "配置预览",
+      "model": "模型",
+      "enabledTools": "已启用工具"
+    },
+    "tools": {
+      "web-search": {
+        "description": "搜索网络信息"
+      },
+      "file-reader": {
+        "description": "读取和分析文件"
+      },
+      "calculator": {
+        "description": "执行数学计算"
+      },
+      "email-sender": {
+        "description": "发送邮件"
+      }
+    },
+    "execution": {
+      "title": "执行团队",
+      "description": "为 {{crewName}} 配置并开始执行",
+      "crew": "团队",
+      "estimatedTime": "预计时间",
+      "startExecution": "开始执行",
+      "starting": "启动中...",
+      "variables": {
+        "title": "变量",
+        "description": "为此次执行配置输入变量",
+        "noVariables": "此工作流不需要任何输入变量",
+        "enterValue": "输入值",
+        "enterNumber": "输入数字",
+        "enterJson": "输入 JSON 对象",
+        "count": "变量",
+        "configured": "已配置变量",
+        "topic": {
+          "description": "内容创建的主要主题或主题"
+        },
+        "targetAudience": {
+          "description": "内容的目标受众"
+        },
+        "wordCount": {
+          "description": "内容的目标字数"
+        },
+        "includeImages": {
+          "description": "是否在内容中包含图片"
+        }
+      },
+      "settings": {
+        "title": "执行设置",
+        "description": "配置此次执行的处理方式"
+      },
+      "priority": {
+        "title": "优先级",
+        "description": "设置队列中的执行优先级",
+        "high": {
+          "label": "高优先级",
+          "description": "立即执行，跳过队列"
+        },
+        "medium": {
+          "label": "中等优先级",
+          "description": "标准执行优先级"
+        },
+        "low": {
+          "label": "低优先级",
+          "description": "在资源可用时执行"
+        }
+      },
+      "timeout": {
+        "title": "超时",
+        "description": "执行允许的最大时间",
+        "customTimeout": "设置自定义超时",
+        "timeoutValue": "超时时长",
+        "defaultTimeout": "使用默认超时（1小时）",
+        "default": "默认（1小时）"
+      },
+      "preview": {
+        "title": "预览",
+        "description": "在开始前查看您的执行配置",
+        "summary": "执行摘要",
+        "warning": "一旦开始，此执行无法轻易停止。请确保所有设置都正确。"
+      },
+      "errors": {
+        "variableRequired": "{{name}} 是必填的",
+        "invalidNumber": "请输入有效数字",
+        "invalidJson": "请输入有效的 JSON",
+        "invalidTimeout": "超时时间必须在 1 分钟到 24 小时之间",
+        "executionFailed": "启动执行失败"
+      }
+    }
   }
 }

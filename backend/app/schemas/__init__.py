@@ -6,7 +6,7 @@ from .agent import (
     AgentUpdate,
     AgentResponse,
     AgentExecuteRequest,
-    AgentExecuteResponse
+    AgentExecuteResponse,
 )
 from .task import (
     TaskBase,
@@ -14,7 +14,7 @@ from .task import (
     TaskUpdate,
     TaskResponse,
     TaskExecuteRequest,
-    TaskExecuteResponse
+    TaskExecuteResponse,
 )
 from .workflow import (
     WorkflowBase,
@@ -22,13 +22,11 @@ from .workflow import (
     WorkflowUpdate,
     WorkflowResponse,
     WorkflowExecuteRequest,
-    WorkflowExecuteResponse
+    WorkflowExecuteResponse,
+    WorkflowTemplateCreate,
+    WorkflowTemplateResponse,
 )
-from .common import (
-    PaginatedResponse,
-    HealthCheckResponse,
-    ErrorResponse
-)
+from .common import PaginatedResponse, HealthCheckResponse, ErrorResponse
 
 __all__ = [
     # Agent schemas
@@ -52,6 +50,8 @@ __all__ = [
     "WorkflowResponse",
     "WorkflowExecuteRequest",
     "WorkflowExecuteResponse",
+    "WorkflowTemplateCreate",
+    "WorkflowTemplateResponse",
     # Common schemas
     "PaginatedResponse",
     "HealthCheckResponse",

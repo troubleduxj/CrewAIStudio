@@ -1,6 +1,6 @@
 "use client"
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container, ListChecks, Network, Store } from 'lucide-react';
 
 import {
@@ -18,26 +18,11 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import Header from '@/components/layout/header';
+import { Breadcrumb } from '@/components/layout/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/toaster';
 
-const menuItems = {
-  build: [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/workflow', label: '工作流面板', icon: Network },
-    { href: '/agents', label: 'Agent 面板', icon: Users },
-    { href: '/tasks', label: 'Task 面板', icon: ListChecks },
-    { href: '/tools', label: '工具面板', icon: Wrench },
-    { href: '/marketplace', label: 'Marketplace', icon: Store },
-  ],
-  operate: [
-    { href: '/traces', label: 'Traces', icon: Spline },
-    { href: '/llm-connections', label: 'LLM Connections', icon: BrainCircuit },
-  ],
-  manage: [
-    { href: '/settings', label: '设置面板', icon: Settings },
-    { href: '/resources', label: 'Resources', icon: Container },
-  ]
-};
+// Menu items will be defined inside the component to use translations
 
 /**
  * 主布局组件，包含侧边栏导航和头部
@@ -46,11 +31,53 @@ const menuItems = {
  */
 export default function MainLayout({
   children,
+  noPadding = false,
 }: {
   children: React.ReactNode;
+  noPadding?: boolean;
 }) {
-  const router = useRouter();
-  const pathname = router.pathname;
+  const pathname = usePathname();
+  // const { t } = useTranslation('common'); // 国际化将在后续步骤中统一处理
+
+  const t = (key: string, fallback?: string) => {
+    const translations: { [key: string]: string } = {
+      'navigation.dashboard': 'Dashboard',
+      'navigation.workflowTemplates': 'Workflow Templates',
+      'navigation.crews': 'Crews',
+      'navigation.tools': 'Tools',
+      'navigation.llmConnections': 'LLM Connections',
+      'common.help': 'Help',
+    };
+    return translations[key] || fallback || key;
+  };
+
+  const menuItems = {
+    build: [
+      { href: '/dashboard', label: t('navigation.dashboard'), icon: LayoutDashboard },
+      { href: '/workflow-templates', label: t('navigation.workflowTemplates'), icon: Network },
+      { href: '/crews', label: t('navigation.crews'), icon: Users },
+      { href: '/tools', label: t('navigation.tools'), icon: Wrench },
+      { href: '/marketplace', label: 'Marketplace', icon: Store },
+    ],
+    operate: [
+      { href: '/traces', label: 'Traces', icon: Spline },
+      { href: '/llm-connections', label: t('navigation.llmConnections'), icon: BrainCircuit },
+    ],
+    manage: [
+      { href: '/settings', label: 'Settings', icon: Settings },
+      { href: '/resources', label: 'Resources', icon: Container },
+    ]
+  };
+
+  // 更精确的路由匹配函数
+  const isRouteActive = (href: string): boolean => {
+    if (href === '/dashboard') {
+      return pathname === '/' || pathname === '/dashboard';
+    }
+    
+    // 对于其他路由，检查是否以该路径开头
+    return pathname.startsWith(href);
+  };
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -74,7 +101,7 @@ export default function MainLayout({
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(href)}
+                    isActive={isRouteActive(href)}
                     tooltip={{ children: label }}
                   >
                     <Link href={href}>
@@ -91,7 +118,7 @@ export default function MainLayout({
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(href)}
+                    isActive={isRouteActive(href)}
                     tooltip={{ children: label }}
                   >
                     <Link href={href}>
@@ -108,7 +135,7 @@ export default function MainLayout({
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(href)}
+                    isActive={isRouteActive(href)}
                     tooltip={{ children: label }}
                   >
                     <Link href={href}>
@@ -124,20 +151,23 @@ export default function MainLayout({
         <SidebarFooter className='group-data-[collapsible=icon]:hidden'>
           <div className="flex flex-col gap-2 p-2">
             <Button variant="outline" size="sm">
-              帮助
+              {t('common.help', 'Help')}
             </Button>
           </div>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
-        <div className="flex items-center gap-3 p-4 h-14 border-b border-border/40 bg-card/20 backdrop-blur-lg sticky top-0 z-50">
+      <SidebarInset className="flex flex-col h-screen">
+        <div className="flex items-center gap-4 p-4 h-14 border-b border-border/40 bg-card/20 backdrop-blur-lg sticky top-0 z-50 shrink-0 shadow-sm">
           <SidebarTrigger />
-          <div className="flex-1">
-            <Header />
-          </div>
+          <Breadcrumb />
+          <div className="flex-1" />
+          <Header />
         </div>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
+        <main className={`flex flex-col flex-1 ${noPadding ? '' : 'overflow-y-auto p-4 md:p-6 lg:p-8'}`}>
+          {children}
+        </main>
       </SidebarInset>
+      <Toaster />
     </SidebarProvider>
   );
 }

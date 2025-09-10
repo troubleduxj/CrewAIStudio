@@ -8,7 +8,6 @@ CrewAI Studio Workflows Endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from uuid import UUID
 
 from app.core.database import get_db
 from app.schemas.workflow import WorkflowCreate, WorkflowUpdate, WorkflowResponse
@@ -33,15 +32,54 @@ async def create_workflow(
     Returns:
         WorkflowResponse: 创建的工作流信息
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        # 记录接收到的数据
+        logger.info(f"Received workflow data: {workflow_data.model_dump()}")
+        
         workflow_service = WorkflowService(db)
         workflow = workflow_service.create_workflow(workflow_data)
+        
+        logger.info(f"Successfully created workflow with ID: {workflow.id}")
         return workflow
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {str(e)}"
+        )
     except Exception as e:
+        logger.error(f"Failed to create workflow: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to create workflow: {str(e)}"
         )
+
+
+@router.get("/check-name/{workflow_name}", response_model=dict)
+async def check_workflow_name(
+    workflow_name: str,
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    检查工作流名称是否已存在
+    
+    Args:
+        workflow_name: 工作流名称
+        db: 数据库会话
+    
+    Returns:
+        dict: 包含exists字段的响应
+    """
+    workflow_service = WorkflowService(db)
+    existing_workflow = workflow_service.get_workflow_by_name(workflow_name)
+    
+    return {
+        "exists": existing_workflow is not None,
+        "workflow_id": existing_workflow.id if existing_workflow else None
+    }
 
 
 @router.get("/", response_model=List[WorkflowResponse])
@@ -63,18 +101,40 @@ async def list_workflows(
     Returns:
         List[WorkflowResponse]: 工作流列表
     """
-    workflow_service = WorkflowService(db)
-    workflows = workflow_service.list_workflows(
-        skip=skip, 
-        limit=limit, 
-        status=status_filter
-    )
-    return workflows
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        from app.models.workflow import WorkflowStatus
+        
+        # 转换字符串状态为枚举
+        status_enum = None
+        if status_filter:
+            try:
+                status_enum = WorkflowStatus(status_filter)
+            except ValueError:
+                # 如果状态值无效，忽略过滤
+                status_enum = None
+        
+        workflow_service = WorkflowService(db)
+        workflows = workflow_service.list_workflows(
+            skip=skip, 
+            limit=limit, 
+            status=status_enum
+        )
+        logger.info(f"Successfully retrieved {len(workflows)} workflows")
+        return workflows
+    except Exception as e:
+        logger.error(f"Error in list_workflows: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve workflows: {str(e)}"
+        )
 
 
 @router.get("/{workflow_id}", response_model=WorkflowResponse)
 async def get_workflow(
-    workflow_id: UUID,
+    workflow_id: int,
     db: Session = Depends(get_db)
 ) -> WorkflowResponse:
     """
@@ -88,7 +148,7 @@ async def get_workflow(
         WorkflowResponse: 工作流详情
     """
     workflow_service = WorkflowService(db)
-    workflow = await workflow_service.get_workflow_by_id(workflow_id)
+    workflow = workflow_service.get_workflow(workflow_id)
     
     if not workflow:
         raise HTTPException(
@@ -101,7 +161,7 @@ async def get_workflow(
 
 @router.put("/{workflow_id}", response_model=WorkflowResponse)
 async def update_workflow(
-    workflow_id: UUID,
+    workflow_id: int,
     workflow_data: WorkflowUpdate,
     db: Session = Depends(get_db)
 ) -> WorkflowResponse:
@@ -118,7 +178,7 @@ async def update_workflow(
     """
     try:
         workflow_service = WorkflowService(db)
-        workflow = await workflow_service.update_workflow(workflow_id, workflow_data)
+        workflow = workflow_service.update_workflow(workflow_id, workflow_data)
         
         if not workflow:
             raise HTTPException(
@@ -136,7 +196,7 @@ async def update_workflow(
 
 @router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workflow(
-    workflow_id: UUID,
+    workflow_id: int,
     db: Session = Depends(get_db)
 ) -> None:
     """
@@ -158,7 +218,7 @@ async def delete_workflow(
 
 @router.post("/{workflow_id}/execute", response_model=dict)
 async def execute_workflow(
-    workflow_id: UUID,
+    workflow_id: int,
     execution_params: dict = {},
     db: Session = Depends(get_db)
 ) -> dict:
@@ -175,15 +235,24 @@ async def execute_workflow(
     """
     try:
         workflow_service = WorkflowService(db)
-        result = await workflow_service.execute_workflow(workflow_id, execution_params)
         
-        if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workflow not found"
-            )
+        # 调用WorkflowService执行工作流
+        execution_id = await workflow_service.execute_workflow(
+            workflow_id=workflow_id,
+            inputs=execution_params
+        )
         
-        return result
+        return {
+            "execution_id": execution_id,
+            "workflow_id": str(workflow_id),
+            "status": "running",
+            "message": "Workflow execution started successfully"
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid workflow execution request: {str(e)}"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -191,43 +260,43 @@ async def execute_workflow(
         )
 
 
-@router.get("/{workflow_id}/status", response_model=dict)
+@router.get("/execution/{execution_id}/status", response_model=dict)
 async def get_workflow_status(
-    workflow_id: UUID,
+    execution_id: str,
     db: Session = Depends(get_db)
 ) -> dict:
     """
     获取工作流执行状态
     
     Args:
-        workflow_id: 工作流ID
+        execution_id: 执行ID
         db: 数据库会话
     
     Returns:
         dict: 工作流状态信息
     """
     workflow_service = WorkflowService(db)
-    status_info = await workflow_service.get_workflow_status(workflow_id)
+    status_info = workflow_service.get_workflow_status(execution_id)
     
     if not status_info:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found"
+            detail=f"Execution {execution_id} not found"
         )
     
     return status_info
 
 
-@router.post("/{workflow_id}/stop", response_model=dict)
+@router.post("/execution/{execution_id}/stop", response_model=dict)
 async def stop_workflow(
-    workflow_id: UUID,
+    execution_id: str,
     db: Session = Depends(get_db)
 ) -> dict:
     """
     停止工作流执行
     
     Args:
-        workflow_id: 工作流ID
+        execution_id: 执行ID
         db: 数据库会话
     
     Returns:
@@ -235,17 +304,21 @@ async def stop_workflow(
     """
     try:
         workflow_service = WorkflowService(db)
-        result = await workflow_service.stop_workflow(workflow_id)
+        success = workflow_service.stop_workflow(execution_id)
         
-        if not result:
+        if not success:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workflow not found"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to stop execution {execution_id}. It may not be running or may not exist."
             )
         
-        return result
+        return {
+            "execution_id": execution_id,
+            "status": "stopped",
+            "message": "Workflow execution stopped successfully"
+        }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to stop workflow: {str(e)}"
+            detail=f"Failed to stop workflow execution: {str(e)}"
         )

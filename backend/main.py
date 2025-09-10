@@ -5,9 +5,10 @@ CrewAI Studio Backend API
 主应用入口文件
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import uvicorn
 from loguru import logger
@@ -25,19 +26,21 @@ async def lifespan(app: FastAPI):
     启动时初始化数据库和CrewAI，关闭时清理资源
     """
     logger.info("Starting CrewAI Studio Backend...")
-    
+
     # 初始化数据库
     await init_db()
-    
+
     # 初始化CrewAI框架
     crewai_success = await init_crewai()
     if crewai_success:
         logger.info("CrewAI framework initialized successfully")
     else:
-        logger.warning("CrewAI framework initialization failed, some features may not be available")
-    
+        logger.warning(
+            "CrewAI framework initialization failed, some features may not be available"
+        )
+
     yield
-    
+
     logger.info("Shutting down CrewAI Studio Backend...")
 
 
@@ -47,7 +50,7 @@ app = FastAPI(
     description="CrewAI Studio Backend API for managing AI agents and workflows",
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # 配置CORS
@@ -73,7 +76,7 @@ async def root():
         "message": "CrewAI Studio Backend API",
         "status": "running",
         "version": "1.0.0",
-        "docs_url": "/docs"
+        "docs_url": "/docs",
     }
 
 
@@ -84,13 +87,13 @@ async def health_check():
     用于监控服务状态
     """
     from datetime import datetime
-    
+
     crewai_status = get_crewai_status()
-    
+
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "crewai": crewai_status
+        "crewai": crewai_status,
     }
 
 
@@ -102,19 +105,22 @@ async def http_exception_handler(request, exc):
     """
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": exc.detail,
-            "status_code": exc.status_code
-        }
+        content={"error": exc.detail, "status_code": exc.status_code},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Pydantic验证错误处理器
+    处理422 Unprocessable Entity错误，提供详细的验证错误信息
+    """
+    logger.error(f"Validation error for {request.method} {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422, content={"detail": exc.errors(), "body": exc.body}
     )
 
 
 if __name__ == "__main__":
     # 开发环境启动配置
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="127.0.0.1", port=9998, reload=True, log_level="info")

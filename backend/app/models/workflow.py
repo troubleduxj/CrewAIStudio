@@ -86,6 +86,7 @@ class Workflow(BaseModel):
     execution_count = Column(Integer, default=0, nullable=True)  # 执行次数
     success_count = Column(Integer, default=0, nullable=True)  # 成功次数
     failure_count = Column(Integer, default=0, nullable=True)  # 失败次数
+    average_execution_time = Column(Integer, default=0, nullable=True)  # 平均执行时间（秒）
     
     # 配置选项
     is_template = Column(Boolean, default=False, nullable=False)  # 是否为模板

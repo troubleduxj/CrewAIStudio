@@ -19,18 +19,18 @@ from app.core.config import settings
 engine = create_engine(
     settings.DATABASE_URL,
     poolclass=StaticPool,
-    connect_args={
-        "check_same_thread": False,  # SQLite特定配置
-    } if "sqlite" in settings.DATABASE_URL else {},
+    connect_args=(
+        {
+            "check_same_thread": False,  # SQLite特定配置
+        }
+        if "sqlite" in settings.DATABASE_URL
+        else {}
+    ),
     echo=settings.DEBUG,  # 开发环境下打印SQL语句
 )
 
 # 创建会话工厂
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # 创建基础模型类
 Base = declarative_base()
@@ -43,19 +43,24 @@ def get_db() -> Generator[Session, None, None]:
     """
     获取数据库会话
     用于FastAPI依赖注入
-    
+
     Yields:
         Session: SQLAlchemy数据库会话
     """
+    logger.debug("Attempting to create a new database session.")
     db = SessionLocal()
+    logger.debug("Database session created.")
     try:
         yield db
+        logger.debug("Database session yielded successfully.")
     except Exception as e:
-        logger.error(f"Database session error: {e}")
+        logger.error(f"Database session error: {e}", exc_info=True)
         db.rollback()
+        logger.warning("Database session rolled back due to an error.")
         raise
     finally:
         db.close()
+        logger.debug("Database session closed.")
 
 
 async def init_db() -> None:
@@ -65,17 +70,18 @@ async def init_db() -> None:
     """
     try:
         logger.info("Initializing database...")
-        
+
         # 导入所有模型以确保它们被注册
         from app.models.agent import Agent
         from app.models.task import Task
         from app.models.workflow import Workflow
-        
+        from app.models.crew import Crew
+
         # 创建所有表
         Base.metadata.create_all(bind=engine)
-        
+
         logger.info("Database initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         raise

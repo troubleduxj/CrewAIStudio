@@ -2,65 +2,66 @@
 
 ## 📋 项目概述
 
-**CrewAI Studio** 是一个基于CrewAI框架的AI代理工作流管理平台，提供可视化的AI代理创建、任务编排和工作流执行功能。
+**CrewAI Studio** 是一个基于CrewAI框架的可视化AI团队协作平台。它提供从 **工作流模板（Workflow Template）** 设计，到具体 **执行团队（Crew）** 的组建与配置，再到任务的异步执行与监控的全流程功能。
 
 ### 核心特性
-- 🤖 AI代理可视化创建和管理
-- 📋 任务编排和依赖管理
-- 🔄 工作流可视化设计和执行
-- 🛠️ 丰富的工具集成
-- 📊 实时执行监控和日志
-- 🔌 多种LLM模型支持
+- 🤖 **可视化编排**: 通过拖拽方式设计工作流模板，定义Agent角色和Task依赖。
+- 🧩 **团队实例化**: 基于模板创建和配置具体的Crew，为Agent指定不同的LLM和工具。
+- 🚀 **异步执行引擎**: 支持多Crew并发执行，并通过任务队列保证系统稳定性和可扩展性。
+- 📊 **实时监控与日志**: 追踪每次执行（Execution）的状态、进度和详细日志。
+- 🔌 **开放API**: 提供外部API，将平台强大的Agent能力集成到其他应用中。
+- 🛠️ **丰富的工具集**: 内置并支持自定义工具，增强Agent能力。
 
 ---
 
 ## 🏗️ 系统架构
 
-### 整体架构图
+### 整体架构图 (v1.1)
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    CrewAI Studio Platform                   │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend (Next.js + React)                                │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ Dashboard   │ │ Workflow    │ │ Agent       │           │
-│  │ 仪表板      │ │ 工作流面板  │ │ 代理面板    │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ Task Panel  │ │ Tools       │ │ Settings    │           │
-│  │ 任务面板    │ │ 工具面板    │ │ 设置面板    │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-├─────────────────────────────────────────────────────────────┤
-│  API Gateway (FastAPI)                                     │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ /agents     │ │ /tasks      │ │ /workflows  │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ /crewai     │ │ /health     │ │ /executions │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-├─────────────────────────────────────────────────────────────┤
-│  Service Layer                                              │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ Agent       │ │ Task        │ │ Workflow    │           │
-│  │ Service     │ │ Service     │ │ Service     │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ Execution   │ │ CrewAI      │ │ LLM         │           │
-│  │ Service     │ │ Service     │ │ Service     │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-├─────────────────────────────────────────────────────────────┤
-│  Data Layer                                                 │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ SQLite/     │ │ File        │ │ Cache       │           │
-│  │ PostgreSQL  │ │ Storage     │ │ (Redis)     │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-├─────────────────────────────────────────────────────────────┤
-│  External Integrations                                      │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ OpenAI      │ │ Anthropic   │ │ CrewAI      │           │
-│  │ API         │ │ API         │ │ Tools       │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-└─────────────────────────────────────────────────────────────┘
+                                 ┌──────────────────────────┐
+                                 │ External API Clients     │
+                                 └───────────┬──────────────┘
+                                             │ (Public API)
+┌────────────────────────────────────────────┼───────────────────────────────────────────┐
+│                    CrewAI Studio Platform  │                                           │
+├────────────────────────────────────────────┴───────────────────────────────────────────┤
+│  Frontend (Next.js + React)                                                            │
+│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐             │
+│  │ Dashboard     │ │ Workflow      │ │ Crews         │ │ Executions    │             │
+│  │ 仪表板        │ │ Templates     │ │ 我的团队      │ │ 执行记录      │             │
+│  └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘             │
+├────────────────────────────────────────────┬───────────────────────────────────────────┤
+│  API Gateway (FastAPI)                     │                                           │
+│  - Receives requests                       │                                           │
+│  - Authentication (Internal & API Key)     │ 2. Enqueue Job                            │
+│  - Pushes jobs to queue                    │                                           │
+└────────────────────────────────────────────┼───────────────────────────────────────────┘
+                                             │
+                                             ▼
+                                 ┌──────────────────────────┐
+                                 │ Job Queue (Redis/Celery) │
+                                 └───────────┬──────────────┘
+                                             │ 3. Dequeue Job
+                                             ▼
+                                 ┌──────────────────────────┐
+                                 │ Worker(s)                │
+                                 │ - Execute crew.kickoff() │
+                                 │ - Update DB with status  │
+                                 └───────────┬──────────────┘
+                                             │ 1. API Call
+┌────────────────────────────────────────────┼───────────────────────────────────────────┐
+│  Service & Data Layer                      │                                           │
+├────────────────────────────────────────────┼───────────────────────────────────────────┤
+│  Service Layer                             │ Data Layer                                │
+│  ┌───────────────┐ ┌───────────────┐     │ ┌────────────────┐ ┌────────────────┐      │
+│  │ Crew Service  │ │ Exec. Service │     │ │ PostgreSQL     │ │ File Storage   │      │
+│  └───────────────┘ └───────────────┘     │ └────────────────┘ └────────────────┘      │
+├────────────────────────────────────────────┼───────────────────────────────────────────┤
+│  External Integrations (Called by Workers) │                                           │
+│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐                                 │
+│  │ OpenAI API    │ │ Anthropic API │ │ CrewAI Tools  │                                 │
+│  └───────────────┘ └───────────────┘ └───────────────┘                                 │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 技术栈
@@ -79,7 +80,7 @@
 - **ORM**: SQLAlchemy
 - **数据库**: SQLite (开发) / PostgreSQL (生产)
 - **AI框架**: CrewAI + LangChain
-- **异步处理**: asyncio + ThreadPoolExecutor
+- **异步处理**: Celery + Redis / RabbitMQ
 - **API文档**: OpenAPI/Swagger
 - **日志**: Loguru
 
@@ -93,49 +94,34 @@
 
 ## 📊 数据库设计
 
-### 核心实体关系图
+### 核心实体关系图 (v1.1)
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│     Agent       │     │      Task       │     │    Workflow     │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ id (PK)         │     │ id (PK)         │     │ id (PK)         │
-│ name            │     │ name            │     │ name            │
-│ description     │     │ description     │     │ description     │
-│ role            │     │ task_type       │     │ version         │
-│ goal            │     │ status          │     │ status          │
-│ backstory       │     │ priority        │     │ workflow_type   │
-│ agent_type      │     │ input_data      │     │ execution_mode  │
-│ status          │     │ expected_output │     │ definition      │
-│ llm_model       │     │ output_data     │     │ agents_config   │
-│ temperature     │     │ assigned_agent  │◄────┤ tasks_config    │
-│ tools           │     │ dependencies    │     │ schedule_config │
-│ capabilities    │     │ started_at      │     │ current_step    │
-│ system_prompt   │     │ completed_at    │     │ progress        │
-│ created_at      │     │ created_at      │     │ created_at      │
-│ updated_at      │     │ updated_at      │     │ updated_at      │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-         │                        │                        │
-         │                        │                        │
-         └────────────────────────┼────────────────────────┘
-                                  │
-                    ┌─────────────────┐
-                    │   Execution     │
-                    ├─────────────────┤
-                    │ id (PK)         │
-                    │ execution_type  │
-                    │ target_id       │
-                    │ status          │
-                    │ progress        │
-                    │ result          │
-                    │ error_message   │
-                    │ logs            │
-                    │ metadata        │
-                    │ started_at      │
-                    │ completed_at    │
-                    │ created_at      │
-                    │ updated_at      │
-                    └─────────────────┘
+┌───────────────────┐      ┌───────────────────┐
+│ Workflow Template │      │      Crew         │
+├───────────────────┤      ├───────────────────┤
+│ id (PK)           │      │ id (PK)           │
+│ name              │      │ name              │
+│ description       │      │ description       │
+│ definition (JSON) │      │ workflow_id (FK)  │◄──┐
+└───────────────────┘      │ agents_config(JSON) │   │
+                           │ status            │   │
+                           └─────────┬─────────┘   │
+                                     │             │
+                                     │ 1..N        │ 1..1
+                                     ▼             │
+                    ┌───────────────────┐          │
+                    │    Execution      │          │
+                    ├───────────────────┤          │
+                    │ id (PK)           │          │
+                    │ crew_id (FK)      │──────────┘
+                    │ status            │
+                    │ input_data        │
+                    │ output_data       │
+                    │ started_at        │
+                    │ completed_at      │
+                    └───────────────────┘
 ```
+*说明: `Agent` 和 `Task` 的定义存在于 `Workflow Template` 的 `definition` JSON 中，并在 `Crew` 的 `agents_config` 中被实例化配置。*
 
 ### 数据模型详细设计
 
@@ -204,37 +190,47 @@ class Task(BaseModel):
     completed_at: datetime       # 完成时间
 ```
 
-#### Workflow 模型
+#### Workflow Template 模型
 ```python
-class Workflow(BaseModel):
+class WorkflowTemplate(BaseModel):
     # 基本信息
-    name: str                    # 工作流名称
+    name: str                    # 模板名称
     description: str             # 描述
-    version: str                 # 版本号
-    
-    # 状态和类型
-    status: WorkflowStatus       # 状态 (DRAFT, ACTIVE, PAUSED, etc.)
-    workflow_type: WorkflowType  # 类型 (SEQUENTIAL, PARALLEL, CONDITIONAL)
-    execution_mode: ExecutionMode # 执行模式 (MANUAL, SCHEDULED, TRIGGERED)
     
     # 工作流定义
-    workflow_definition: Dict    # 工作流定义JSON
-    agents_config: List[Dict]    # 参与的Agent配置
-    tasks_config: List[Dict]     # 任务配置
+    definition: Dict             # 工作流结构定义 (包含Agents角色和Tasks流程)
+```
+
+#### Crew 模型 (新增)
+```python
+class Crew(BaseModel):
+    # 基本信息
+    name: str                    # 团队名称
+    description: str             # 描述
+    workflow_template_id: int    # 关联的工作流模板ID
     
-    # 执行配置
-    max_execution_time: int      # 最大执行时间
-    retry_policy: Dict           # 重试策略
-    error_handling: Dict         # 错误处理配置
+    # 实例化配置
+    agents_config: Dict          # Agent的具体配置 (e.g., LLM模型, API Keys)
     
-    # 调度配置
-    schedule_config: Dict        # 调度配置
-    trigger_conditions: List     # 触发条件
+    # 状态
+    status: CrewStatus           # 状态 (READY, RUNNING, DISABLED)
+```
+
+#### Execution 模型 (调整)
+`Execution` 模型现在与 `Crew` 模型关联，记录一次具体的执行。
+```python
+class Execution(BaseModel):
+    # 基本信息
+    crew_id: int                 # 关联的Crew ID
+    status: ExecutionStatus      # 状态 (PENDING, RUNNING, COMPLETED, FAILED)
     
-    # 执行状态
-    current_step: str            # 当前执行步骤
-    progress: float              # 执行进度 (0-100)
-    last_execution_id: str       # 最后执行ID
+    # 数据
+    input_data: Dict             # 本次执行的输入
+    output_data: Dict            # 最终的输出结果
+    
+    # 时间
+    started_at: datetime
+    completed_at: datetime
 ```
 
 ---
@@ -282,54 +278,69 @@ GET    /api/v1/tasks/{id}/status   # 获取Task状态
 POST   /api/v1/tasks/batch         # 批量操作
 ```
 
-### 3. Workflow管理模块
+### 3. Workflow Template 管理模块
 
 #### 功能特性
-- ✅ 可视化工作流设计器
-- ✅ 工作流版本管理
-- ✅ 工作流执行引擎
-- ✅ 实时执行监控
-- ✅ 工作流模板库
+- ✅ 可视化工作流模板设计器
+- ✅ 模板版本管理
+- ✅ 模板导入/导出
+- ✅ 模板库
 
 #### API接口
 ```
-GET    /api/v1/workflows              # 获取Workflow列表
-POST   /api/v1/workflows              # 创建Workflow
-GET    /api/v1/workflows/{id}         # 获取Workflow详情
-PUT    /api/v1/workflows/{id}         # 更新Workflow
-DELETE /api/v1/workflows/{id}         # 删除Workflow
-POST   /api/v1/workflows/{id}/execute # 执行Workflow
-GET    /api/v1/workflows/{id}/status  # 获取执行状态
-POST   /api/v1/workflows/{id}/stop    # 停止执行
+GET    /api/v1/workflow-templates              # 获取模板列表
+POST   /api/v1/workflow-templates              # 创建模板
+GET    /api/v1/workflow-templates/{id}         # 获取模板详情
+PUT    /api/v1/workflow-templates/{id}         # 更新模板
+DELETE /api/v1/workflow-templates/{id}         # 删除模板
 ```
 
-### 4. 执行引擎模块
+### 4. Crew 管理模块 (新增)
+
+#### 功能特性
+- ✅ 基于模板创建Crew
+- ✅ 配置Crew（为Agent指定LLM、工具等）
+- ✅ 管理Crew的生命周期
+- ✅ 查看Crew的执行历史
+
+#### API接口
+```
+GET    /api/v1/crews                  # 获取Crew列表
+POST   /api/v1/crews                  # 创建Crew
+GET    /api/v1/crews/{id}             # 获取Crew详情
+PUT    /api/v1/crews/{id}             # 更新Crew
+DELETE /api/v1/crews/{id}             # 删除Crew
+POST   /api/v1/crews/{id}/execute     # 异步执行Crew，返回job_id
+GET    /api/v1/executions/{job_id}    # 查询执行状态和结果
+```
+
+### 5. 执行引擎模块 (v1.1)
 
 #### 核心组件
-- **ExecutionService**: 执行管理服务
-- **CrewAIService**: CrewAI框架集成
-- **TaskQueue**: 任务队列管理
-- **ConcurrencyManager**: 并发控制
-- **ProgressTracker**: 进度跟踪
+- **ExecutionService**: 接收执行请求，创建`Execution`记录，并发布任务到队列。
+- **Celery Task**: 定义在后台Worker中执行`crew.kickoff()`的具体逻辑。
+- **CrewAIService**: CrewAI框架集成，被Celery Task调用。
+- **Job Queue (Redis/RabbitMQ)**: 任务消息代理。
+- **Worker (Celery)**: 消费任务并执行的独立进程。
 
 #### 执行流程
 ```
-1. 接收执行请求
+1. API接收执行请求 (POST /api/v1/crews/{id}/execute)
    ↓
-2. 验证工作流/任务状态
+2. ExecutionService: 创建Execution记录 (status: PENDING)，生成job_id
    ↓
-3. 创建执行上下文
+3. ExecutionService: 将任务(crew_id, input)推送到Job Queue
    ↓
-4. 检查并发限制
+4. API立即返回job_id给客户端
    ↓
-5. 提交到执行队列 / 立即执行
+5. Worker从Job Queue获取任务
    ↓
-6. 实时状态更新
+6. Worker更新Execution状态为RUNNING，并执行crew.kickoff()
    ↓
-7. 结果处理和存储
+7. Worker执行完毕，将结果和最终状态(COMPLETED/FAILED)更新回数据库
 ```
 
-### 5. 工具集成模块
+### 6. 工具集成模块
 
 #### 内置工具
 - 🔍 **WebsiteSearchTool**: 网站搜索
@@ -349,15 +360,16 @@ POST   /api/v1/workflows/{id}/stop    # 停止执行
 
 ## 🎨 前端架构设计
 
-### 页面结构
+### 页面结构 (v1.1)
 ```
 /
 ├── dashboard/              # 仪表板
-├── workflow/               # 工作流面板
-├── agents/                 # Agent面板
-├── tasks/                  # Task面板
+├── workflow-templates/     # 工作流模板面板
+├── crews/                  # 我的团队面板
+├── executions/             # 执行记录/追踪
+├── agents/                 # (可能被整合进Crews和Templates中)
+├── tasks/                  # (可能被整合进Crews和Templates中)
 ├── tools/                  # 工具面板
-├── traces/                 # 执行追踪
 ├── llm-connections/        # LLM连接管理
 ├── settings/               # 设置面板
 └── resources/              # 资源监控
@@ -444,20 +456,37 @@ src/
 
 ### Docker容器化部署
 
-#### 服务组件
+#### 服务组件 (v1.1)
 ```yaml
 services:
-  # 后端服务
+  # 消息队列
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  # 后端API服务
   backend:
     image: crewai-studio-backend
     ports: ["8000:8000"]
     environment:
       - DATABASE_URL=sqlite:///./crewai_studio.db
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-    volumes:
-      - ./backend/crewai_studio.db:/app/crewai_studio.db
-      - backend_logs:/app/logs
+    depends_on:
+      - redis
     
+  # 后端Worker服务
+  worker:
+    image: crewai-studio-backend
+    command: celery -A app.tasks worker --loglevel=info
+    environment:
+      - DATABASE_URL=sqlite:///./crewai_studio.db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - redis
+      - backend
+
   # 前端服务
   frontend:
     image: crewai-studio-frontend
@@ -476,13 +505,13 @@ services:
 
 ### 生产环境部署
 
-#### 推荐架构
+#### 推荐架构 (v1.1)
 ```
 [Load Balancer] → [Nginx] → [Frontend Container]
                            ↓
-                    [Backend Container] → [PostgreSQL]
-                           ↓
-                    [Redis Cache] (可选)
+                    [Backend API Container(s)] ─► [Job Queue (Redis)] ◄─ [Backend Worker Container(s)]
+                           │                                                    │
+                           └─────────────────► [PostgreSQL] ◄───────────────────┘
 ```
 
 #### 环境配置
@@ -606,8 +635,8 @@ services:
 
 ---
 
-**文档版本**: v1.0.0  
-**最后更新**: 2024-01-20  
+**文档版本**: v1.1.0  
+**最后更新**: 2025-09-01  
 **维护者**: CrewAI Studio Team
 
 > 💡 **提示**: 本文档将随着项目发展持续更新，建议定期查看最新版本。

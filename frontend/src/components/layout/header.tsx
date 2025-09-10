@@ -1,14 +1,8 @@
-import { Moon, Sun, Globe } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import { Button } from '../ui/button';
-import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+import { LanguageSwitcher } from '../shared/LanguageSwitcher';
 
 /**
  * 页面头部组件
@@ -17,12 +11,7 @@ import {
  */
 export default function Header() {
   const { t } = useTranslation('common');
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
-  
-  const changeLanguage = (locale: string) => {
-    router.push(router.pathname, router.asPath, { locale });
-  };
   return (
     <div className="flex items-center justify-end w-full">
       <div className="flex items-center gap-4">
@@ -38,21 +27,12 @@ export default function Header() {
         
         <div className="flex items-center gap-2">
           {/* 语言切换 */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Globe className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => changeLanguage('en')}>
-                English
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => changeLanguage('zh')}>
-                中文
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <LanguageSwitcher 
+            variant="dropdown" 
+            size="sm" 
+            showIcon={true} 
+            showText={false} 
+          />
           
           {/* 主题切换 */}
           <Button

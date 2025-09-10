@@ -3,6 +3,8 @@
 from .agent import Agent
 from .task import Task
 from .workflow import Workflow
+from .execution import Execution
+from .crew import Crew
 from .base import Base
 
-__all__ = ["Agent", "Task", "Workflow", "Base"]
+__all__ = ["Agent", "Task", "Workflow", "Execution", "Crew", "Base"]

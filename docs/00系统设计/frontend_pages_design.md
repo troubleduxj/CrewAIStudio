@@ -43,13 +43,12 @@
 
 ## 🗺️ 路由设计
 
-### 路由结构
+### 路由结构 (v1.1)
 ```
 /                     # 首页 (重定向到 /dashboard)
 ├── /dashboard        # 仪表板页面
-├── /workflow         # 工作流编辑器
-├── /agents           # Agent 管理面板
-├── /tasks            # Task 管理面板
+├── /workflow-templates # 工作流模板设计器
+├── /crews            # Crew (执行团队) 管理面板
 ├── /tools            # 工具管理面板
 ├── /traces           # 执行轨迹查看
 ├── /llm-connections  # LLM 连接管理
@@ -122,12 +121,12 @@ export default function DashboardPage() {
 
 ---
 
-### 3. 工作流编辑器 (`/workflow`)
+### 3. 工作流模板页面 (`/workflow-templates`)
 
 #### 功能描述
-- 可视化工作流设计和编辑
-- 支持拖拽创建节点和连接
-- 工作流执行和监控
+- **设计和管理可复用的工作流“蓝图” (Blueprint)**
+- 可视化设计工作流结构，定义 Agent 角色和 Task 依赖
+- 不涉及具体的执行，仅作为创建 Crew 的模板
 
 #### 页面结构
 ```typescript
@@ -157,86 +156,52 @@ export default function WorkflowPage() {
 - **WorkflowNodeEditor**: 节点编辑器
 - **WorkflowExecutionEvents**: 执行事件监控
 
-#### 功能模块
-
-##### 3.1 可视化编辑器
-- **画布操作**:
-  - 拖拽创建节点
-  - 连接线绘制
-  - 节点选择和编辑
-  - 缩放和平移
-
-- **节点类型**:
-  - Agent 节点
-  - Task 节点
-  - Tool 节点
-  - 连接器节点
-
-##### 3.2 工具面板
-- **分类管理**:
-  - System 工具
-  - Network 工具
-  - Files 工具
-
-- **拖拽功能**:
-  - 从工具面板拖拽到画布
-  - 工具预览和配置
-
-##### 3.3 执行控制
-- **执行操作**:
-  - 运行工作流
-  - 暂停/恢复
-  - 停止执行
-  - 调试模式
-
-- **状态监控**:
-  - 执行进度
-  - 日志输出
-  - 错误处理
+#### 核心操作
+- **新建模板**: 进入全屏的可视化编辑器。
+- **编辑模板**: 修改现有模板结构。
+- **克隆模板**: 快速复制一个模板。
+- **从模板创建 Crew**: 关键操作，链接到 Crew 创建流程。
 
 #### UI设计要点
-- 分屏布局 (编辑器 + 工具面板)
-- 可折叠侧边栏
-- 实时状态指示
-- 响应式设计
+- **卡片式/列表式布局** 展示所有模板。
+- **可视化编辑器**: 以 React Flow 为核心，侧边栏提供 Agent 和 Task 节点用于拖拽。
+- **节点配置**: 在编辑器中，Agent 节点只定义 **角色 (Role)** 和 **目标 (Goal)**，不涉及具体 LLM。
 
 ---
 
-### 4. Agent 管理面板 (`/agents`)
+### 4. Crews 页面 (`/crews`)
 
 #### 功能描述
-- AI代理的创建、编辑和管理
-- 代理配置和参数调整
-- 代理状态监控
+- **配置、管理和运行具体的 AI 执行团队 (Crew 实例)**
+- 用户在此页面扮演 **“运营者”** 的角色，将模板实例化为可执行的团队。
 
 #### 页面结构
 ```typescript
-export default function AgentsPage() {
+export default function CrewsPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
         {/* 页面头部 */}
         <div className="flex items-center justify-between">
           <div>
-            <h1>Agent 面板</h1>
-            <p>管理和配置您的AI代理</p>
+            <h1>我的团队 (Crews)</h1>
+            <p>创建、配置并运行您的 AI 执行团队</p>
           </div>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            创建 Agent
+            创建团队
           </Button>
         </div>
         
         {/* 统计卡片 */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* 活跃 Agents */}
-          {/* 总计 Agents */}
-          {/* 配置状态 */}
+          {/* 活跃团队 */}
+          {/* 团队总数 */}
+          {/* 任务成功率 */}
         </div>
         
-        {/* Agent 列表 */}
-        <AgentEditor />
-        <ResearchAnalystDemo />
+        {/* Crew 列表 */}
+        <CrewList />
       </div>
     </MainLayout>
   );
@@ -244,97 +209,29 @@ export default function AgentsPage() {
 ```
 
 #### 核心组件
-- **AgentEditor**: Agent 编辑器组件
-- **AgentList**: Agent 列表组件
-- **AgentConfig**: Agent 配置组件
+- **CrewList**: 展示所有 Crew 实例的列表。
+- **CrewCard**: 单个 Crew 实例的卡片，显示名称、所用模板、状态等。
+- **CrewCreationWizard**: 一个分步模态框或页面，用于创建新的 Crew。
 
 #### 功能模块
 
-##### 4.1 Agent 创建
-- 基础信息配置
-- 角色和能力设定
-- 工具集成配置
+##### 4.1 Crew 创建流程 (Wizard)
+1.  **第一步: 选择蓝图**: 从 `Workflow Templates` 列表中选择一个模板。
+2.  **第二步: 配置团队**: 核心步骤。界面列出模板中定义的所有 Agent 角色，用户需要为 **每个角色** 配置具体的执行参数：
+    -   **LLM 选择**: 从下拉列表中选择已连接的 LLM (e.g., `openai-gpt4o`)。
+    -   **工具配置**: 为需要使用工具的 Agent 填入 API Key 等。
+    -   **参数微调**: 调整 `temperature` 等高级参数。
+3.  **第三步: 命名并保存**: 为 Crew 实例命名。
 
-##### 4.2 Agent 管理
-- 列表查看和筛选
-- 批量操作
-- 状态监控
-
-##### 4.3 Agent 配置
-- 参数调整
-- 行为模式设定
-- 权限管理
-
----
-
-### 5. Task 管理面板 (`/tasks`)
-
-#### 功能描述
-- 任务的创建、编辑和监控
-- 任务执行状态跟踪
-- 任务结果分析
-
-#### 页面结构
-```typescript
-export default function TasksPage() {
-  return (
-    <MainLayout>
-      <div className="space-y-6">
-        {/* 页面头部 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1>Task 面板</h1>
-            <p>管理和监控您的任务执行</p>
-          </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            创建任务
-          </Button>
-        </div>
-        
-        {/* 任务统计 */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* 进行中 */}
-          {/* 已完成 */}
-          {/* 失败 */}
-          {/* 待处理 */}
-        </div>
-        
-        {/* 任务管理组件 */}
-        <TaskEditor />
-        <DynamicTaskAdjuster />
-      </div>
-    </MainLayout>
-  );
-}
-```
-
-#### 核心组件
-- **TaskEditor**: 任务编辑器
-- **DynamicTaskAdjuster**: 动态任务调整器
-- **TaskList**: 任务列表
-- **TaskMonitor**: 任务监控
-
-#### 功能模块
-
-##### 5.1 任务创建
-- 任务类型选择
-- 参数配置
-- 依赖关系设定
-
-##### 5.2 任务监控
-- 执行状态跟踪
-- 进度显示
-- 日志查看
-
-##### 5.3 任务管理
-- 任务队列管理
-- 优先级调整
-- 批量操作
+##### 4.2 Crew 管理
+- **运行 (Run)**: 弹出一个简洁的输入框，让用户输入本次任务的变量，然后异步启动执行。
+- **编辑配置**: 修改 Crew 的 LLM 或工具配置。
+- **查看执行历史**: 跳转到 `Traces` 页面并筛选出该 Crew 的所有历史记录。
+- **状态监控**: 在卡片上实时显示 Crew 的状态（如 `准备就绪`, `执行中`）。
 
 ---
 
-### 6. 工具管理面板 (`/tools`)
+### 5. 工具管理面板 (`/tools`)
 
 #### 功能描述
 - 工具的管理和配置
@@ -394,7 +291,7 @@ export default function ToolsPage() {
 
 ---
 
-### 7. 执行轨迹页面 (`/traces`)
+### 6. 执行轨迹页面 (`/traces`)
 
 #### 功能描述
 - 系统执行轨迹的查看和分析
@@ -448,7 +345,7 @@ export default function TracesPage() {
 
 ---
 
-### 8. LLM 连接管理 (`/llm-connections`)
+### 7. LLM 连接管理 (`/llm-connections`)
 
 #### 功能描述
 - 大语言模型连接配置
@@ -462,7 +359,7 @@ export default function TracesPage() {
 
 ---
 
-### 9. 资源管理 (`/resources`)
+### 8. 资源管理 (`/resources`)
 
 #### 功能描述
 - 系统资源监控
@@ -476,7 +373,7 @@ export default function TracesPage() {
 
 ---
 
-### 10. 系统设置 (`/settings`)
+### 9. 系统设置 (`/settings`)
 
 #### 功能描述
 - 系统配置管理

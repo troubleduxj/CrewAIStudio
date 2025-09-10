@@ -487,7 +487,7 @@ class AgentService:
             is_active=True,  # 新克隆的Agent默认激活
             is_public=False,  # 新克隆的Agent默认私有
             
-            metadata=source_agent.meta_data.copy() if source_agent.meta_data else {},
+            meta_data=source_agent.meta_data.copy() if source_agent.meta_data else {},
             tags=source_agent.tags.copy() if source_agent.tags else [],
             category=source_agent.category
         )

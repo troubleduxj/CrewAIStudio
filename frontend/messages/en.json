@@ -19,7 +19,23 @@
     "success": "Success",
     "error": "Error",
     "confirm": "Confirm",
-    "close": "Close"
+    "close": "Close",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No",
+    "required": "Required",
+    "show": "Show",
+    "hide": "Hide",
+    "agents": "Agents",
+    "tasks": "Tasks",
+    "minutes": "minutes",
+    "hours": "hours",
+    "minute": "minute",
+    "hour": "hour",
+    "notSet": "Not Set",
+    "back_to_list": "Back to List",
+    "back": "Back"
   },
   "dashboard": {
     "title": "CrewAI Studio",
@@ -106,5 +122,205 @@
   "language": {
     "english": "English",
     "chinese": "中文"
+  },
+  "workflowTemplates": {
+    "title": "Workflow Templates",
+    "description": "Design and manage reusable workflow blueprints",
+    "createTemplate": "Create Template",
+    "editTemplate": "Edit Template",
+    "cloneTemplate": "Clone Template",
+    "createCrewFromTemplate": "Create Crew from Template",
+    "noTemplates": "No workflow templates",
+    "noTemplatesDescription": "Create your first workflow template to get started",
+    "usages": "usages"
+  },
+  "crews": {
+    "title": "My Crews",
+    "description": "Create, configure and run your AI execution teams",
+    "createCrew": "Create Crew",
+    "runCrew": "Run Crew",
+    "editCrew": "Edit Crew",
+    "viewHistory": "View History",
+    "history": "History",
+    "settings": "Settings",
+    "noCrews": "No crews",
+    "noCrewsDescription": "Create your first execution crew based on a workflow template",
+    "noCrewsFound": "No crews found",
+    "noCrewsFoundDescription": "Try adjusting your search or filter criteria",
+    "searchPlaceholder": "Search crews by name, description, or template...",
+    "filterByStatus": "Filter by Status",
+    "allStatuses": "All Statuses",
+    "activeFilters": "Active Filters",
+    "search": "Search",
+    "status": "Status",
+    "showingResults": "Showing {{count}} of {{total}} crews",
+    "totalCrews": "{{count}} crews total",
+    "executions": "executions",
+    "successRate": "Success Rate",
+    "lastExecution": "Last Execution",
+    "createdAt": "Created",
+    "neverExecuted": "Never executed",
+    "executionInProgress": "Execution in Progress",
+    "running": "Running",
+    "estimatedTimeRemaining": "Estimated time remaining",
+    "stats": {
+      "totalCrews": "Total Crews",
+      "activeCrews": "Active Crews",
+      "runningCrews": "Running Crews",
+      "successRate": "Success Rate"
+    },
+    "status": {
+      "ready": "Ready",
+      "running": "Running",
+      "disabled": "Disabled"
+    },
+    "sortBy": {
+      "name": "Name",
+      "createdAt": "Created Date",
+      "lastExecutionAt": "Last Execution",
+      "successRate": "Success Rate"
+    },
+    "wizard": {
+      "title": "Create New Crew",
+      "description": "Follow these steps to create and configure your AI execution crew",
+      "step": "Step",
+      "of": "of",
+      "selectTemplate": "Select Template",
+      "selectTemplateDescription": "Choose a workflow template as the foundation for your crew",
+      "configureAgents": "Configure Agents",
+      "configureAgentsDescription": "Set up LLM models and tools for each agent in your crew",
+      "crewDetails": "Crew Details",
+      "crewDetailsDescription": "Provide a name and description for your new crew",
+      "loadingTemplates": "Loading templates...",
+      "crewName": "Crew Name",
+      "crewNamePlaceholder": "Enter a descriptive name for your crew",
+      "crewDescription": "Crew Description",
+      "crewDescriptionPlaceholder": "Describe what this crew is designed to accomplish",
+      "configurationSummary": "Configuration Summary",
+      "selectedTemplate": "Selected Template",
+      "configuredAgents": "Configured Agents",
+      "createCrew": "Create Crew",
+      "errors": {
+        "templateRequired": "Please select a workflow template",
+        "agentsRequired": "Please configure at least one agent",
+        "llmRequired": "Please select an LLM model",
+        "nameRequired": "Crew name is required",
+        "nameTooLong": "Crew name must be less than 100 characters"
+      }
+    },
+    "agent": {
+      "configurationRequired": "Configuration Required",
+      "agentInfo": "Agent Information",
+      "viewDetails": "View Details",
+      "goal": "Goal",
+      "backstory": "Backstory",
+      "requiredTools": "Required Tools",
+      "llmConfiguration": "LLM Configuration",
+      "llmModel": "LLM Model",
+      "selectLLM": "Select LLM Model",
+      "maxTokens": "Max Tokens",
+      "maxTokensTooltip": "Maximum number of tokens the model can generate",
+      "temperature": "Temperature",
+      "temperatureTooltip": "Controls randomness in the model's responses (0.0 = deterministic, 2.0 = very creative)",
+      "temperature": {
+        "conservative": "Conservative",
+        "balanced": "Balanced",
+        "creative": "Creative"
+      },
+      "toolsConfiguration": "Tools Configuration",
+      "required": "Required",
+      "apiKeysConfiguration": "API Keys Configuration",
+      "enterApiKey": "Enter API key",
+      "apiKeyNotice": "Secure Storage",
+      "apiKeyNoticeDescription": "API keys are encrypted and stored securely. They are only used for tool execution.",
+      "configurationPreview": "Configuration Preview",
+      "model": "Model",
+      "enabledTools": "Enabled Tools"
+    },
+    "tools": {
+      "web-search": {
+        "description": "Search the web for information"
+      },
+      "file-reader": {
+        "description": "Read and analyze files"
+      },
+      "calculator": {
+        "description": "Perform mathematical calculations"
+      },
+      "email-sender": {
+        "description": "Send emails"
+      }
+    },
+    "execution": {
+      "title": "Execute Crew",
+      "description": "Configure and start execution for {{crewName}}",
+      "crew": "Crew",
+      "estimatedTime": "Estimated time",
+      "startExecution": "Start Execution",
+      "starting": "Starting...",
+      "variables": {
+        "title": "Variables",
+        "description": "Configure input variables for this execution",
+        "noVariables": "This workflow doesn't require any input variables",
+        "enterValue": "Enter value",
+        "enterNumber": "Enter number",
+        "enterJson": "Enter JSON object",
+        "count": "Variables",
+        "configured": "Configured Variables",
+        "topic": {
+          "description": "The main topic or subject for content creation"
+        },
+        "targetAudience": {
+          "description": "The intended audience for the content"
+        },
+        "wordCount": {
+          "description": "Target word count for the content"
+        },
+        "includeImages": {
+          "description": "Whether to include images in the content"
+        }
+      },
+      "settings": {
+        "title": "Execution Settings",
+        "description": "Configure how this execution should be handled"
+      },
+      "priority": {
+        "title": "Priority",
+        "description": "Set the execution priority in the queue",
+        "high": {
+          "label": "High Priority",
+          "description": "Execute immediately, bypassing queue"
+        },
+        "medium": {
+          "label": "Medium Priority",
+          "description": "Standard execution priority"
+        },
+        "low": {
+          "label": "Low Priority",
+          "description": "Execute when resources are available"
+        }
+      },
+      "timeout": {
+        "title": "Timeout",
+        "description": "Maximum time allowed for execution",
+        "customTimeout": "Set custom timeout",
+        "timeoutValue": "Timeout Duration",
+        "defaultTimeout": "Using default timeout (1 hour)",
+        "default": "Default (1 hour)"
+      },
+      "preview": {
+        "title": "Preview",
+        "description": "Review your execution configuration before starting",
+        "summary": "Execution Summary",
+        "warning": "Once started, this execution cannot be easily stopped. Make sure all settings are correct."
+      },
+      "errors": {
+        "variableRequired": "{{name}} is required",
+        "invalidNumber": "Please enter a valid number",
+        "invalidJson": "Please enter valid JSON",
+        "invalidTimeout": "Timeout must be between 1 minute and 24 hours",
+        "executionFailed": "Failed to start execution"
+      }
+    }
   }
 }

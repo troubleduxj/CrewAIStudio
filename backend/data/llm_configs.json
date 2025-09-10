@@ -1,0 +1,32 @@
+{
+  "gemini": {
+    "provider": "gemini",
+    "model": "gemini-pro",
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "top_p": null,
+    "frequency_penalty": null,
+    "presence_penalty": null,
+    "base_url": null,
+    "api_key": "AIzaSyCpGmQT1b7mvQl-u-HsnpRDJpeHkEWeTKc",
+    "extra_config": null,
+    "created_at": "2025-08-31T19:54:52.263707",
+    "updated_at": "2025-08-31T19:54:52.263707"
+  },
+  "deepseek": {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "top_p": null,
+    "frequency_penalty": null,
+    "presence_penalty": null,
+    "base_url": null,
+    "api_key": "sk-3b7bbc118d0e46a78d2210c13eaed6a5",
+    "extra_config": null,
+    "created_at": "2025-08-31T19:57:37.540256",
+    "updated_at": "2025-09-05T11:38:24.276259",
+    "name": "deepsek",
+    "description": "deepseek配置信息"
+  }
+}

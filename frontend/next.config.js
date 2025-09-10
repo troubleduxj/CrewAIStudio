@@ -1,13 +1,24 @@
-const { i18n } = require('./next-i18next.config');
 const webpack = require('webpack');
 const path = require('path');
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  
+  // 启用实验性功能以优化代码分割
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  
+  // 优化打包配置
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
   serverExternalPackages: [
-    '@google/generative-ai',
-    'genkit',
-    '@genkit-ai/googleai',
     '@grpc/grpc-js',
     'express',
     'get-port',
@@ -39,7 +50,50 @@ const nextConfig = {
     'async_hooks'
   ],
 
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
+    // 优化代码分割
+    if (!isServer && !dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // 第三方库单独打包
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20
+            },
+            // React 相关库单独打包
+            react: {
+              name: 'react',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/,
+              priority: 30
+            },
+            // UI 组件库单独打包
+            ui: {
+              name: 'ui',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react|framer-motion)[\\/]/,
+              priority: 25
+            },
+            // 公共组件单独打包
+            common: {
+              name: 'common',
+              chunks: 'all',
+              minChunks: 2,
+              priority: 10,
+              reuseExistingChunk: true
+            }
+          }
+        }
+      };
+    }
+
     if (!isServer) {
       // 排除 server 目录不被客户端打包
       config.resolve.alias = {
@@ -76,11 +130,6 @@ const nextConfig = {
         worker_threads: false,
         inspector: false,
         async_hooks: false,
-        // Genkit 相关模块
-        'genkit': false,
-        '@genkit-ai/googleai': false,
-        '@genkit-ai/next': false,
-        '@google/generative-ai': false,
         'express': false,
         'get-port': false,
       };
@@ -95,25 +144,7 @@ const nextConfig = {
             resource.request = path.resolve(__dirname, 'lib/empty-module.js');
           }
         ),
-        // 处理 genkit 相关模块
-        new webpack.NormalModuleReplacementPlugin(
-          /^genkit$/,
-          (resource) => {
-            resource.request = path.resolve(__dirname, 'lib/empty-module.js');
-          }
-        ),
-        new webpack.NormalModuleReplacementPlugin(
-          /^@genkit-ai\/.*$/,
-          (resource) => {
-            resource.request = path.resolve(__dirname, 'lib/empty-module.js');
-          }
-        ),
-        new webpack.NormalModuleReplacementPlugin(
-          /^@google\/generative-ai$/,
-          (resource) => {
-            resource.request = path.resolve(__dirname, 'lib/empty-module.js');
-          }
-        ),
+
         // 处理服务器端路径
         new webpack.NormalModuleReplacementPlugin(
           /^@\/server\/.*$/,
@@ -153,4 +184,4 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);
