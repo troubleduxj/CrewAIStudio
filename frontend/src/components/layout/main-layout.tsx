@@ -1,7 +1,8 @@
 "use client"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container, ListChecks, Network, Store } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { LayoutDashboard, Users, Wrench, Settings, Bot, Spline, BrainCircuit, Container, ListChecks, Network, Store, Terminal } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -37,19 +38,7 @@ export default function MainLayout({
   noPadding?: boolean;
 }) {
   const pathname = usePathname();
-  // const { t } = useTranslation('common'); // 国际化将在后续步骤中统一处理
-
-  const t = (key: string, fallback?: string) => {
-    const translations: { [key: string]: string } = {
-      'navigation.dashboard': 'Dashboard',
-      'navigation.workflowTemplates': 'Workflow Templates',
-      'navigation.crews': 'Crews',
-      'navigation.tools': 'Tools',
-      'navigation.llmConnections': 'LLM Connections',
-      'common.help': 'Help',
-    };
-    return translations[key] || fallback || key;
-  };
+  const t = useTranslations();
 
   const menuItems = {
     build: [
@@ -57,20 +46,22 @@ export default function MainLayout({
       { href: '/workflow-templates', label: t('navigation.workflowTemplates'), icon: Network },
       { href: '/crews', label: t('navigation.crews'), icon: Users },
       { href: '/tools', label: t('navigation.tools'), icon: Wrench },
-      { href: '/marketplace', label: 'Marketplace', icon: Store },
+      { href: '/playground', label: t('navigation.playground'), icon: Terminal },
+      { href: '/marketplace', label: t('navigation.marketplace'), icon: Store },
     ],
     operate: [
-      { href: '/traces', label: 'Traces', icon: Spline },
+      { href: '/traces', label: t('navigation.traces'), icon: Spline },
       { href: '/llm-connections', label: t('navigation.llmConnections'), icon: BrainCircuit },
     ],
     manage: [
-      { href: '/settings', label: 'Settings', icon: Settings },
-      { href: '/resources', label: 'Resources', icon: Container },
+      { href: '/settings', label: t('navigation.settings'), icon: Settings },
+      { href: '/resources', label: t('navigation.resources'), icon: Container },
     ]
   };
 
   // 更精确的路由匹配函数
   const isRouteActive = (href: string): boolean => {
+    if (!pathname) return false;
     if (href === '/dashboard') {
       return pathname === '/' || pathname === '/dashboard';
     }
@@ -96,7 +87,7 @@ export default function MainLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarGroup>
-              <SidebarGroupLabel>Build</SidebarGroupLabel>
+              <SidebarGroupLabel>{t('navigation.groups.build')}</SidebarGroupLabel>
               {menuItems.build.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
@@ -113,7 +104,7 @@ export default function MainLayout({
               ))}
             </SidebarGroup>
             <SidebarGroup>
-              <SidebarGroupLabel>Operate</SidebarGroupLabel>
+              <SidebarGroupLabel>{t('navigation.groups.operate')}</SidebarGroupLabel>
               {menuItems.operate.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
@@ -130,7 +121,7 @@ export default function MainLayout({
               ))}
             </SidebarGroup>
             <SidebarGroup>
-              <SidebarGroupLabel>Manage</SidebarGroupLabel>
+              <SidebarGroupLabel>{t('navigation.groups.manage')}</SidebarGroupLabel>
               {menuItems.manage.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
@@ -151,7 +142,7 @@ export default function MainLayout({
         <SidebarFooter className='group-data-[collapsible=icon]:hidden'>
           <div className="flex flex-col gap-2 p-2">
             <Button variant="outline" size="sm">
-              {t('common.help', 'Help')}
+              {t('common.help')}
             </Button>
           </div>
         </SidebarFooter>

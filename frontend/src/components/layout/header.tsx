@@ -1,5 +1,5 @@
 import { Moon, Sun } from 'lucide-react';
-import { useTranslation } from 'next-i18next';
+import { useTranslations } from 'next-intl';
 import { Button } from '../ui/button';
 import { useTheme } from 'next-themes';
 import { LanguageSwitcher } from '../shared/LanguageSwitcher';
@@ -10,7 +10,7 @@ import { LanguageSwitcher } from '../shared/LanguageSwitcher';
  * @returns 头部组件
  */
 export default function Header() {
-  const { t } = useTranslation('common');
+  const t = useTranslations('common');
   const { theme, setTheme } = useTheme();
   return (
     <div className="flex items-center justify-end w-full">

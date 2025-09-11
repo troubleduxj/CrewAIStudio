@@ -20,7 +20,7 @@ export default function EditWorkflowTemplatePage() {
   const t = useTranslations('common');
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
+  const id = (params?.id ?? '') as string;
   const { toast } = useToast();
   const [template, setTemplate] = useState<WorkflowTemplate | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ export default function EditWorkflowTemplatePage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleSave(template)}>
               <Save className="h-4 w-4 mr-2" />
-              {t('common.save')}
+              {t('save')}
             </Button>
             <Button variant="outline" size="icon" onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}>
               {isRightPanelOpen ? <PanelRightClose className="h-5 w-5" /> : <PanelRightOpen className="h-5 w-5" />}

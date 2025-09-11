@@ -11,7 +11,8 @@
     "api_key": "AIzaSyCpGmQT1b7mvQl-u-HsnpRDJpeHkEWeTKc",
     "extra_config": null,
     "created_at": "2025-08-31T19:54:52.263707",
-    "updated_at": "2025-08-31T19:54:52.263707"
+    "updated_at": "2025-08-31T19:54:52.263707",
+    "is_active": true
   },
   "deepseek": {
     "provider": "deepseek",
@@ -27,6 +28,7 @@
     "created_at": "2025-08-31T19:57:37.540256",
     "updated_at": "2025-09-05T11:38:24.276259",
     "name": "deepsek",
-    "description": "deepseek配置信息"
+    "description": "deepseek配置信息",
+    "is_active": true
   }
 }

@@ -1,13 +1,24 @@
 {
   "navigation": {
     "dashboard": "仪表板",
-    "workflow": "工作流",
-    "agents": "智能体",
-    "tasks": "任务",
+    "workflowTemplates": "工作流模板",
+    "crews": "我的团队",
     "tools": "工具",
-    "llmConnections": "LLM 连接"
+    "playground": "交互测试",
+    "marketplace": "市场",
+    "traces": "追踪",
+    "llmConnections": "LLM 连接",
+    "settings": "设置",
+    "resources": "资源",
+    "groups": {
+      "build": "构建",
+      "operate": "运营",
+      "manage": "管理"
+    }
   },
   "common": {
+    "systemStatus": "系统状态",
+    "help": "帮助",
     "save": "保存",
     "cancel": "取消",
     "edit": "编辑",
@@ -35,7 +46,18 @@
     "hour": "小时",
     "notSet": "未设置",
     "back_to_list": "返回列表",
-    "back": "返回"
+    "back": "返回",
+    "workflowTemplates": {
+      "title": "工作流模板",
+      "description": "设计和管理可复用的工作流蓝图",
+      "createTemplate": "创建模板",
+      "editTemplate": "编辑模板",
+      "cloneTemplate": "克隆模板",
+      "createCrewFromTemplate": "从模板创建团队",
+      "noTemplates": "暂无工作流模板",
+      "noTemplatesDescription": "创建您的第一个工作流模板来开始使用",
+      "usages": "次使用"
+    }
   },
   "dashboard": {
     "title": "CrewAI 工作室",
@@ -122,17 +144,6 @@
   "language": {
     "english": "English",
     "chinese": "中文"
-  },
-  "workflowTemplates": {
-    "title": "工作流模板",
-    "description": "设计和管理可复用的工作流蓝图",
-    "createTemplate": "创建模板",
-    "editTemplate": "编辑模板",
-    "cloneTemplate": "克隆模板",
-    "createCrewFromTemplate": "从模板创建团队",
-    "noTemplates": "暂无工作流模板",
-    "noTemplatesDescription": "创建您的第一个工作流模板来开始使用",
-    "usages": "次使用"
   },
   "crews": {
     "title": "我的团队",

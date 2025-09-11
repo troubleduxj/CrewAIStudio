@@ -55,5 +55,6 @@ pytest-cov
 # Additional LLM providers
 langchain-community
 langchain-openai
+langchain-google-genai
 # ollama
 openai

@@ -28,16 +28,16 @@ async def lifespan(app: FastAPI):
     logger.info("Starting CrewAI Studio Backend...")
 
     # 初始化数据库
-    await init_db()
+    # await init_db()
 
     # 初始化CrewAI框架
-    crewai_success = await init_crewai()
-    if crewai_success:
-        logger.info("CrewAI framework initialized successfully")
-    else:
-        logger.warning(
-            "CrewAI framework initialization failed, some features may not be available"
-        )
+    # crewai_success = await init_crewai()
+    # if crewai_success:
+    #     logger.info("CrewAI framework initialized successfully")
+    # else:
+    #     logger.warning(
+    #         "CrewAI framework initialization failed, some features may not be available"
+    #     )
 
     yield
 
@@ -56,7 +56,7 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.get_cors_origins(),
+    allow_origins=["*"],  # 允许所有来源，方便开发
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -123,4 +123,4 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 if __name__ == "__main__":
     # 开发环境启动配置
-    uvicorn.run("main:app", host="127.0.0.1", port=9998, reload=True, log_level="info")
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True, log_level="info")

@@ -5,7 +5,7 @@
 import axios from 'axios';
 
 // API基础URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8008';
 
 // LLM提供商类型
 export type LLMProvider = 'openai' | 'anthropic' | 'deepseek' | 'ollama' | 'gemini';

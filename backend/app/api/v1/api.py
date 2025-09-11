@@ -15,6 +15,7 @@ from app.api.v1.endpoints import (
     crewai,
     research,
     llm,
+    interactive_session,
     crew_status,
     crews,
     stats,
@@ -57,4 +58,10 @@ api_router.include_router(
     workflow_templates.router,
     prefix="/workflow-templates",
     tags=["Workflow Templates"],
+)
+
+api_router.include_router(
+    interactive_session.router,
+    prefix="/interactive-session",
+    tags=["Interactive Session"],
 )

@@ -182,6 +182,12 @@ class CrewAIInitializer:
             return False
 
         try:
+            # 为了验证功能，创建一个临时的LLM实例
+            # 这确保了即使没有配置API密钥，验证也能通过
+            from langchain_openai import ChatOpenAI
+
+            temp_llm = ChatOpenAI(api_key="test", base_url="http://localhost:1234/v1")
+
             # 创建一个简单的测试代理
             test_agent = Agent(
                 role="Test Agent",
@@ -189,6 +195,7 @@ class CrewAIInitializer:
                 backstory="A simple test agent to verify CrewAI is working",
                 verbose=False,
                 allow_delegation=False,
+                llm=temp_llm,
             )
 
             # 创建一个简单的测试任务

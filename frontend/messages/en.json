@@ -1,13 +1,24 @@
 {
   "navigation": {
     "dashboard": "Dashboard",
-    "workflow": "Workflow",
-    "agents": "Agents",
-    "tasks": "Tasks",
+    "workflowTemplates": "Workflow Templates",
+    "crews": "Crews",
     "tools": "Tools",
-    "llmConnections": "LLM Connections"
+    "playground": "Playground",
+    "marketplace": "Marketplace",
+    "traces": "Traces",
+    "llmConnections": "LLM Connections",
+    "settings": "Settings",
+    "resources": "Resources",
+    "groups": {
+      "build": "Build",
+      "operate": "Operate",
+      "manage": "Manage"
+    }
   },
   "common": {
+    "systemStatus": "System Status",
+    "help": "Help",
     "save": "Save",
     "cancel": "Cancel",
     "edit": "Edit",
@@ -35,7 +46,18 @@
     "hour": "hour",
     "notSet": "Not Set",
     "back_to_list": "Back to List",
-    "back": "Back"
+    "back": "Back",
+    "workflowTemplates": {
+      "title": "Workflow Templates",
+      "description": "Design and manage reusable workflow blueprints",
+      "createTemplate": "Create Template",
+      "editTemplate": "Edit Template",
+      "cloneTemplate": "Clone Template",
+      "createCrewFromTemplate": "Create Crew from Template",
+      "noTemplates": "No workflow templates",
+      "noTemplatesDescription": "Create your first workflow template to get started",
+      "usages": "usages"
+    }
   },
   "dashboard": {
     "title": "CrewAI Studio",
@@ -122,17 +144,6 @@
   "language": {
     "english": "English",
     "chinese": "中文"
-  },
-  "workflowTemplates": {
-    "title": "Workflow Templates",
-    "description": "Design and manage reusable workflow blueprints",
-    "createTemplate": "Create Template",
-    "editTemplate": "Edit Template",
-    "cloneTemplate": "Clone Template",
-    "createCrewFromTemplate": "Create Crew from Template",
-    "noTemplates": "No workflow templates",
-    "noTemplatesDescription": "Create your first workflow template to get started",
-    "usages": "usages"
   },
   "crews": {
     "title": "My Crews",

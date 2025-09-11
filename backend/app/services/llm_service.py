@@ -138,6 +138,8 @@ class LLMService:
         config_data = config.dict()
         config_data["created_at"] = datetime.now().isoformat()
         config_data["updated_at"] = datetime.now().isoformat()
+        if "is_active" not in config_data:
+            config_data["is_active"] = True
 
         # 处理provider可能是字符串或枚举的情况
         provider_key = (
@@ -172,6 +174,8 @@ class LLMService:
         update_data = config.dict(exclude_unset=True)
         existing_config.update(update_data)
         existing_config["updated_at"] = datetime.now().isoformat()
+        if "is_active" not in existing_config:
+            existing_config["is_active"] = True
 
         configs[provider_key] = existing_config
         self._save_configs(configs)
