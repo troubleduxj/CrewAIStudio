@@ -1,22 +1,71 @@
 # CrewAI Studio
 
-一个用于管理 AI 团队、代理和工作流的综合平台，具有现代化的 Web 界面。
+<p align="center">
+  <a href="https://github.com/troubleduxj/CrewAIStudio">
+    <img src="https://img.shields.io/github/stars/troubleduxj/CrewAIStudio?style=social" alt="GitHub Stars">
+  </a>
+  <a href="https://github.com/troubleduxj/CrewAIStudio/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/troubleduxj/CrewAIStudio" alt="License">
+  </a>
+  <a href="https://github.com/troubleduxj/CrewAIStudio/issues">
+    <img src="https://img.shields.io/github/issues/troubleduxj/CrewAIStudio" alt="GitHub Issues">
+  </a>
+</p>
+
+<p align="center">
+  一个用于管理 AI 团队、代理和工作流的综合平台，具有现代化的 Web 界面。
+</p>
+
+## ✨ 功能特性
+
+- **可视化工作流编辑器**：通过拖放方式设计和管理复杂的 AI 工作流。
+- **AI 代理管理**：轻松创建、配置和监控您的 AI 代理团队。
+- **多语言支持**：界面支持中文和英文，方便全球用户使用。
+- **实时监控**：跟踪任务执行情况，实时查看日志和结果。
+- **灵活的部署选项**：支持 Docker 快速部署和传统手动部署。
+- **强大的数据库迁移**：使用 Alembic 管理数据库架构，确保数据一致性。
 
 ## 🚀 快速开始
 
-### 前端 (端口 3000)
+### 1. 环境准备
+
+- **Python**: 3.8+
+- **Node.js**: 16.x+
+- **Docker**: 最新版本 (推荐)
+
+### 2. 本地开发
+
+#### 前端 (端口 3000)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 后端 (端口 8000)
+#### 后端 (端口 8000)
 ```bash
 cd backend
+# 建议创建并激活虚拟环境
+python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
+```
+
+### 3. Docker 部署
+
+使用提供的部署脚本进行简便的 Docker 管理：
+
+```bash
+# 构建并启动所有服务
+.\deploy.ps1 build
+.\deploy.ps1 start
+
+# 检查状态
+.\deploy.ps1 status
+
+# 查看日志
+.\deploy.ps1 logs
 ```
 
 ## 🗄️ 数据库迁移
@@ -34,26 +83,10 @@ python main.py
 python -m scripts.migration_helpers status
 
 # 生成新迁移
-python -m scripts.migration_helpers generate -m "描述信息"
+python -m scripts.migration_helpers generate -m "Your migration message"
 
 # 应用迁移
 python -m scripts.migration_helpers apply
-```
-
-## 🐳 Docker 部署
-
-使用提供的部署脚本进行简便的 Docker 管理：
-
-```bash
-# 构建并启动所有服务
-.\deploy.ps1 build
-.\deploy.ps1 start
-
-# 检查状态
-.\deploy.ps1 status
-
-# 查看日志
-.\deploy.ps1 logs
 ```
 
 ## 📚 文档
@@ -78,34 +111,27 @@ python -m scripts.migration_helpers apply
 ```
 crewai-studio/
 ├── frontend/                 # Next.js 前端应用
-│   ├── src/                 # 源代码目录
-│   │   ├── components/     # React 组件
-│   │   ├── hooks/          # 自定义 Hooks
-│   │   ├── services/       # API 服务
-│   │   └── stores/         # 状态管理
-│   └── pages/              # 页面路由
-├── backend/                 # FastAPI 后端应用
-│   ├── app/                # 应用核心代码
-│   ├── alembic/           # 数据库迁移文件
-│   ├── scripts/           # 迁移辅助脚本
-│   └── tests/             # 测试文件
-├── docs/                   # 项目文档
-│   ├── zh/                # 中文文档
-│   └── en/                # 英文文档
-└── deploy.ps1             # Docker 部署脚本
+│   ├── src/
+│   │   ├── app/              # Next.js App Router
+│   │   ├── components/       # React 组件
+│   │   ├── hooks/            # 自定义 Hooks
+│   │   ├── services/         # API 服务
+│   │   └── stores/           # 状态管理
+│   └── public/               # 静态资源
+├── backend/                  # FastAPI 后端应用
+│   ├── app/                  # 应用核心代码
+│   │   ├── api/              # API 路由
+│   │   ├── core/             # 核心配置
+│   │   ├── models/           # SQLAlchemy 模型
+│   │   ├── schemas/          # Pydantic 模型
+│   │   └── services/         # 业务逻辑
+│   ├── alembic/              # 数据库迁移文件
+│   └── scripts/              # 辅助脚本
+├── docs/                     # 项目文档
+│   ├── zh/                   # 中文文档
+│   └── en/                   # 英文文档
+└── deploy.ps1                # Docker 部署脚本
 ```
-
-## 🛠️ 开发环境
-
-### 系统要求
-- **Python**: 3.8+
-- **Node.js**: 16.x+
-- **数据库**: SQLite (开发) / PostgreSQL (生产)
-
-### 推荐工具
-- **IDE**: Kiro IDE / VSCode
-- **容器**: Docker & Docker Compose
-- **包管理**: pip (Python) / npm (Node.js)
 
 ## 🔗 相关链接
 
@@ -114,6 +140,10 @@ crewai-studio/
 - **API 文档**: http://localhost:8000/docs
 - **健康检查**: http://localhost:8000/health
 
+## 🤝 贡献
+
+我们欢迎各种形式的贡献！如果您有任何想法、建议或发现了 bug，请随时提交 [Issues](https://github.com/troubleduxj/CrewAIStudio/issues) 或 [Pull Requests](https://github.com/troubleduxj/CrewAIStudio/pulls)。
+
 ## 📄 许可证
 
-本项目采用 MIT 许可证。详情请参见 LICENSE 文件。
+本项目采用 MIT 许可证。详情请参见 [LICENSE](LICENSE) 文件。
