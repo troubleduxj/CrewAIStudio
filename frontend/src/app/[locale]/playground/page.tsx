@@ -23,7 +23,7 @@ export default function PlaygroundPage() {
 
     const connect = () => {
       // TODO: The WebSocket URL should be configurable
-      ws = new WebSocket('ws://localhost:8008/api/v1/interactive-session/ws');
+      ws = new WebSocket('ws://localhost:8000/api/v1/interactive-session/ws');
 
       ws.onopen = () => {
         console.log('WebSocket connected');
